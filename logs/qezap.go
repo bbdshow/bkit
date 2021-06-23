@@ -15,8 +15,8 @@ func init() {
 }
 
 type Config struct {
-	Addr     []string `defval:"127.0.0.1:31082"`
-	Module   string   `defval:"example"`
+	Addr     []string `defval:""`
+	Module   string   `defval:""`
 	Filename string   `defval:"./log/logger.log"`
 	Level    int      `defval:"-1"` // -1=debug 0=info ...
 }
