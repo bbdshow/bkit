@@ -25,5 +25,5 @@ func init() {
 }
 
 func TestAliOSS_TempToken(t *testing.T) {
-	fmt.Println(aliOSS.TempToken(3600, ""))
+	fmt.Println(aliOSS.PutToken(3600, ""))
 }

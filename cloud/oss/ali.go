@@ -93,7 +93,7 @@ func (oss *AliOSS) Delete(key string) error {
 	return nil
 }
 
-func (oss *AliOSS) TempToken(expiredSec int, dir string) (token, accessKey, secretKey string, err error) {
+func (oss *AliOSS) PutToken(expiredSec int, dir string) (token, accessKey, secretKey string, err error) {
 	req := sts.CreateAssumeRoleRequest()
 	req.SetScheme("https")
 	req.Domain = oss.stsDomain

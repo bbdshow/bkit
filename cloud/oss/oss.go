@@ -16,6 +16,6 @@ type Operation interface {
 	Domain() string
 	// 通过Key 生成访问URL
 	URL(key string) string
-	// 访问临时Token
-	TempToken(expiredSec int, dir string) (token, accessKey, secretKey string, err error)
+	// 临时put Token
+	PutToken(expiredSec int, dir string) (token, accessKey, secretKey string, err error)
 }

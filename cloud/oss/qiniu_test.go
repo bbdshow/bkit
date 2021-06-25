@@ -44,7 +44,7 @@ func TestNewQiNiuOSS_Put(t *testing.T) {
 
 func TestQiNiuOSS_TempToken(t *testing.T) {
 	oss := NewQiNiuOSS(ak, sk, domain, bucket)
-	t.Log(oss.TempToken(60, "/test"))
+	t.Log(oss.PutToken(60, "test"))
 }
 
 func TestQiNiuOSS_URL(t *testing.T) {

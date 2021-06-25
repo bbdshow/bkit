@@ -82,7 +82,7 @@ func (oss *QiNiuOSS) Delete(key string) error {
 	return mgr.Delete(oss.bucket, key)
 }
 
-func (oss *QiNiuOSS) TempToken(expiredSec int, dir string) (token, accessKey, secretKey string, err error) {
+func (oss *QiNiuOSS) PutToken(expiredSec int, dir string) (token, accessKey, secretKey string, err error) {
 	scope := oss.bucket
 	if dir != "" {
 		scope = fmt.Sprintf("%s:%s", scope, dir)
