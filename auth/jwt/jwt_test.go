@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 )
@@ -16,7 +17,8 @@ func TestJWTToken(t *testing.T) {
 		User:     "test",
 		Password: "123456",
 	}
-	claims := NewCustomClaims(data, time.Second)
+	byt, _ := json.Marshal(data)
+	claims := NewCustomClaims(string(byt), time.Second)
 
 	str, err := GenerateJWTToken(claims)
 	if err != nil {
@@ -30,15 +32,21 @@ func TestJWTToken(t *testing.T) {
 	if !ok {
 		t.Fatal("verify not ok")
 	}
-	ctxData := &Data{}
-	if err := GetCustomData(str, ctxData); err != nil {
+
+	ctxData, err := GetCustomData(str)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if ctxData.User != data.User {
+	ctxD := &Data{}
+	if err := json.Unmarshal([]byte(ctxData), ctxD); err != nil {
+		t.Fatal(err)
+	}
+
+	if ctxD.User != data.User {
 		t.Fatal("user not equal")
 	}
 
-	if ctxData.Password != data.Password {
+	if ctxD.Password != data.Password {
 		t.Fatal("password not equal")
 	}
 	time.Sleep(2 * time.Second)

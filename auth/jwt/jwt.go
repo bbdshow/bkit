@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -27,18 +26,18 @@ func SetSigningMethod(method jwt.SigningMethod) {
 
 type CustomClaims struct {
 	SigningKey []byte
-	CustomData CustomData `json:"customData"`
+	Data       string `json:"data"` // 任意字符串
 	jwt.StandardClaims
 }
 
 // 自定义携带数据结构
-type CustomData interface{}
+type CustomData string
 
 // NewCustomClaims 自定义请求权
-func NewCustomClaims(data CustomData, ttl time.Duration, signingKey ...string) *CustomClaims {
+func NewCustomClaims(data string, ttl time.Duration, signingKey ...string) *CustomClaims {
 	cc := &CustomClaims{
 		SigningKey: SigningKey,
-		CustomData: data,
+		Data:       data,
 		StandardClaims: jwt.StandardClaims{
 			NotBefore: time.Now().Add(-1 * time.Second).Unix(),
 			ExpiresAt: time.Now().Add(ttl).Unix(),
@@ -75,32 +74,21 @@ func VerifyJWTToken(tokenStr string, signingKey ...string) (bool, error) {
 	return token.Valid, nil
 }
 
-func GetCustomData(tokenStr string, data interface{}, signingKey ...string) error {
+func GetCustomData(tokenStr string, signingKey ...string) (string, error) {
 	key := SigningKey
 	if len(signingKey) > 0 {
 		key = []byte(signingKey[0])
 	}
 	token, err := parseJWTToken(tokenStr, key)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	claims, ok := token.Claims.(*CustomClaims)
 	if !ok {
-		return ErrCustomClaimsInValid
+		return "", ErrCustomClaimsInValid
 	}
-	switch claims.CustomData.(type) {
-	case map[string]interface{}:
-		// 因为加密之前使用 JSON 编码，所以编码处理一下，返回到结构体
-		byt, err := json.Marshal(claims.CustomData)
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(byt, data)
-		return err
-	default:
-		return nil
-	}
+	return claims.Data, err
 }
 
 func parseJWTToken(tokenStr string, signingKey []byte) (*jwt.Token, error) {
