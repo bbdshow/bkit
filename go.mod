@@ -4,6 +4,8 @@ go 1.15
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1161 // indirect
+	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible // indirect
 	github.com/bbdshow/gocache v0.0.0-20210618095529-db5ec942d800
 	github.com/bbdshow/qelog/qezap v1.0.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -14,6 +16,7 @@ require (
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/pelletier/go-toml v1.9.3
+	github.com/qiniu/api.v7/v7 v7.8.2 // indirect
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shopspring/decimal v1.2.0
 	github.com/spf13/viper v1.8.0
