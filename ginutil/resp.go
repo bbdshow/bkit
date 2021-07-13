@@ -24,7 +24,7 @@ func NewBaseResp(code int, msg string) *BaseResp {
 }
 
 func (b *BaseResp) WriteTraceID(c *gin.Context) *BaseResp {
-	tid := logs.Qezap.TraceID(c)
+	tid := logs.Qezap.TraceID(c.Request.Context())
 	if !tid.IsZero() {
 		b.TraceID = tid.Hex()
 	}
