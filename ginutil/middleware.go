@@ -18,6 +18,7 @@ import (
 
 var AuthorizationHeader = "X-Authorization"
 var SignatureHeader = "X-Signature"
+var SignValidDuration = 5 * time.Second
 
 func ContextWithTraceId() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -205,7 +206,7 @@ func JWTAuthVerify(enable bool, signingKey ...string) gin.HandlerFunc {
 
 // ApiHmacSha1Sign API hmacSha1 接口签名 必需设置获取密钥的方法
 func ApiHmacSha1Sign(enable bool, supportMethods []string, getSecretKey func(accessKey string) (string, error)) gin.HandlerFunc {
-	apiSign := sign.NewAPISign()
+	apiSign := sign.NewAPISign(SignValidDuration)
 	apiSign.SetGetSecretKey(getSecretKey)
 
 	return func(c *gin.Context) {

@@ -15,18 +15,29 @@ import (
 	"time"
 )
 
+/*
+1. 签名头X-Signature=accessKey:signStr:timestamp (:分割不同元素)
+2. 签名方式： HmacSha1ToBase64(rawStr+timestamp, secretKey) 最终signStr是Base64编码
+3. rawStr 解释 如果是 GET请求，例子: http://example.com/hello?n=1&a=2  => /hello?a=2&n=11626167650 参数要进行字符正序
+4. 非GET请求，对于Content-Type: application/json {"n":"m","a":2} 也进行字符正序 => {"a":2,"n":"m"} 最终 a=2&n=m
+5. rawStr+timestamp = /hello?a=2&n=m1626167650 时间戳(秒)  最终在签名,携带时间戳，是为了验证签名时间有效性 当前有效性 -+10s
+6. 最终形式都是  path?/k=v&k1=v1 + timestamp
+*/
 // APISign 接口签名
-// 签名头X-Signature=accessKey:signStr:timestamp (:分割不同元素)
-// 签名方式： HmacSha1ToBase64(rawStr+timestamp, secretKey) 最终signStr是Base64编码
-// rawStr 解释 如果是 GET请求，例子: http://example.com/hello?n=1&a=2  =》/hello?a=2&n=1 参数要进行字符正序
-// 非GET请求，不需要携带Path(/hello?) 对于Content-Type: application/json {"n":1,"a":2} 也进行字符正序 =》 {"a":2,"n":1}
-// 还要取当前时间戳(秒) rawStr+timestamp 最终在签名
 type APISign struct {
 	cache        gocache.Cache
 	getSecretKey func(accessKey string) (string, error)
 }
 
-func NewAPISign() *APISign {
+var (
+	defSignValidTime = 5 * time.Second
+)
+
+// signValidDuration sign valid time interval
+func NewAPISign(signValidDuration time.Duration) *APISign {
+	if signValidDuration > defSignValidTime {
+		defSignValidTime = signValidDuration
+	}
 	sign := &APISign{
 		cache:        gocache.NewRWMapCache(),
 		getSecretKey: nil,
@@ -70,11 +81,12 @@ func (sign *APISign) Verify(req *http.Request, header string) error {
 				return err
 			}
 
-			rawStr = reqBody.SortToString("&")
+			rawStr = fmt.Sprintf("%s?%s", req.URL.Path, reqBody.SortToString("&"))
 
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(byt))
 		case "multipart/form-data":
 			rawStr, err = sortParamForm(req, true)
+			rawStr = fmt.Sprintf("%s?%s", req.URL.Path, rawStr)
 			if err != nil {
 				return err
 			}
@@ -108,7 +120,7 @@ func (sign *APISign) decodeHeaderVal(headerVal string) (accessKey, signStr, time
 		return "", "", "", fmt.Errorf("sign timestamp invalid")
 	}
 	t := time.Unix(i, 0)
-	if t.Before(time.Now().Add(-10*time.Minute)) || t.After(time.Now().Add(10*time.Minute)) {
+	if t.Before(time.Now().Add(-defSignValidTime)) || t.After(time.Now().Add(defSignValidTime)) {
 		return "", "", "", fmt.Errorf("sign timestamp invalid")
 	}
 	return accessKey, signStr, timestamp, nil
@@ -128,6 +140,7 @@ func (sign *APISign) SetGetSecretKey(f func(accessKey string) (string, error)) {
 func (sign *APISign) secretKey(accessKey string) (string, error) {
 	v, exists := sign.cache.Get(accessKey)
 	if !exists {
+
 		if sign.getSecretKey == nil {
 			return "", fmt.Errorf("sign getSecretKey function not init")
 		}

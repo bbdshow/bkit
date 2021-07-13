@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"testing"
@@ -14,7 +15,7 @@ import (
 )
 
 func testHttpServer() {
-	sign := NewAPISign()
+	sign := NewAPISign(defSignValidTime)
 	sign.SetGetSecretKey(func(accessKey string) (string, error) {
 		vals := map[string]string{
 			"abc": "abc_secretKey",
@@ -72,8 +73,11 @@ func TestAPISign_Verify(t *testing.T) {
 	timestamp := fmt.Sprintf("%d", ts)
 
 	//signStr := getMethodSign("/sign", timestamp, map[string]interface{}{"2": 2, "1": 1})
-
-	signStr := jsonSign(timestamp, bytes.NewBuffer(byts))
+	_url, err := url.Parse(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	signStr := jsonSign(_url.Path, timestamp, bytes.NewBuffer(byts))
 	req, err := http.NewRequest("POST", path, bytes.NewReader(byts))
 	if err != nil {
 		t.Fatal(err)
@@ -105,7 +109,7 @@ func getMethodSign(path, timestamp string, kv map[string]interface{}) string {
 	return HmacSha1ToBase64(str, "abc_secretKey")
 }
 
-func jsonSign(timestamp string, body io.Reader) string {
+func jsonSign(path string, timestamp string, body io.Reader) string {
 	b := make(RequestBodyMap)
 	byts, err := ioutil.ReadAll(body)
 	if err != nil {
@@ -116,7 +120,7 @@ func jsonSign(timestamp string, body io.Reader) string {
 	}
 	str := b.SortToString("&")
 
-	str = str + timestamp
+	str = path + "?" + str + timestamp
 	fmt.Println(str)
 	return HmacSha1ToBase64(str, "abc_secretKey")
 }

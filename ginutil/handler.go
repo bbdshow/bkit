@@ -23,7 +23,7 @@ const (
 	MDumpBody      // Dump 请求参数&返回参数
 	MRecoverLogger // Recover 日志写入到日志中心
 
-	MStd = MSwagger | MTraceId | MReqLogger | MDumpBody | MRecoverLogger // 默认
+	MStd = MSwagger | MTraceId | MReqLogger | MDumpBody // 默认
 )
 
 func DefaultEngine(flags int) *gin.Engine {
