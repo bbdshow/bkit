@@ -29,7 +29,7 @@ func NewTaskServer() *TaskServer {
 
 type timeAfterFunc struct {
 	d  time.Duration
-	fn func()
+	fn func(ctx context.Context)
 }
 
 func (srv *TaskServer) Run(opts ...Option) error {
@@ -48,7 +48,7 @@ func (srv *TaskServer) Run(opts ...Option) error {
 					func() {
 						// WaitGroup is reused before previous Wait has returned
 						wg.Add(1)
-						fn.fn()
+						fn.fn(ctx)
 						wg.Done()
 					}()
 				}
@@ -77,7 +77,7 @@ func (srv *TaskServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (srv *TaskServer) AddTimeAfterFunc(d time.Duration, fn func()) error {
+func (srv *TaskServer) AddTimeAfterFunc(d time.Duration, fn func(ctx context.Context)) error {
 	if d <= 0 {
 		return fmt.Errorf("d required")
 	}
