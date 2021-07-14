@@ -98,10 +98,10 @@ func (sign *APISign) Verify(req *http.Request, header string) error {
 			return err
 		}
 	}
-
-	signStr1 := SignStrBase64(rawStr, timestamp, secretKey)
+	rawStr = rawStr + timestamp
+	signStr1 := HmacSha1ToBase64(rawStr, secretKey)
 	if signStr1 != signStr {
-		return fmt.Errorf("sign method invalid")
+		return fmt.Errorf("sign method invalid rawStr:%s", rawStr)
 	}
 	return nil
 }
@@ -124,11 +124,6 @@ func (sign *APISign) decodeHeaderVal(headerVal string) (accessKey, signStr, time
 		return "", "", "", fmt.Errorf("sign timestamp invalid")
 	}
 	return accessKey, signStr, timestamp, nil
-}
-
-// SignStrBase64
-func SignStrBase64(rawStr, timestamp, secretKey string) string {
-	return HmacSha1ToBase64(rawStr+timestamp, secretKey)
 }
 
 // SetGetSecretKey 设置SecretKey 获取方法
