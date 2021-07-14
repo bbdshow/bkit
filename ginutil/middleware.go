@@ -223,7 +223,7 @@ func ApiHmacSha1Sign(enable bool, supportMethods []string, getSecretKey func(acc
 		}
 		if isSupport {
 			if err := apiSign.Verify(c.Request, SignatureHeader); err != nil {
-				logs.Qezap.Warn("API签名错误", zap.Error(err), logs.Qezap.ConditionOne(&c.Request.URL.Path), logs.Qezap.FieldTraceID(c.Request.Context()))
+				logs.Qezap.Warn("API签名错误", zap.Error(err), logs.Qezap.ConditionOne(c.Request.URL.Path), logs.Qezap.FieldTraceID(c.Request.Context()))
 				RespErr(c, errc.ErrAuthSignatureInvalid, http.StatusUnauthorized)
 				c.Abort()
 				return
