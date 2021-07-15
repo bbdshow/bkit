@@ -27,18 +27,26 @@ import (
 type APISign struct {
 	cache        gocache.Cache
 	getSecretKey func(accessKey string) (string, error)
+	method       Method
 }
+type Method string
+
+const (
+	HmacSha256 Method = "HMAC-SHA256"
+	HmacSha1   Method = "HMAC-SHA1"
+)
 
 var (
 	defSignValidTime = 5 * time.Second
 )
 
 // signValidDuration sign valid time interval
-func NewAPISign(signValidDuration time.Duration) *APISign {
+func NewAPISign(signValidDuration time.Duration, method Method) *APISign {
 	if signValidDuration > defSignValidTime {
 		defSignValidTime = signValidDuration
 	}
 	sign := &APISign{
+		method:       method,
 		cache:        gocache.NewRWMapCache(),
 		getSecretKey: nil,
 	}
@@ -99,8 +107,16 @@ func (sign *APISign) Verify(req *http.Request, header string) error {
 		}
 	}
 	rawStr = rawStr + timestamp
-	signStr1 := HmacSha1ToBase64(rawStr, secretKey)
-	if signStr1 != signStr {
+	signStrDist := ""
+	switch sign.method {
+	case HmacSha1:
+		signStrDist = HmacSha1ToBase64(rawStr, secretKey)
+	case HmacSha256:
+		signStrDist = HmacSha256ToBase64(rawStr, secretKey)
+	default:
+		return fmt.Errorf("sign method not support %s", sign.method)
+	}
+	if signStrDist != signStr {
 		return fmt.Errorf("sign method invalid rawStr:%s", rawStr)
 	}
 	return nil

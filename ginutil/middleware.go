@@ -205,8 +205,8 @@ func JWTAuthVerify(enable bool, signingKey ...string) gin.HandlerFunc {
 }
 
 // ApiHmacSha1Sign API hmacSha1 接口签名 必需设置获取密钥的方法
-func ApiHmacSha1Sign(enable bool, supportMethods []string, getSecretKey func(accessKey string) (string, error)) gin.HandlerFunc {
-	apiSign := sign.NewAPISign(SignValidDuration)
+func ApiHmacSha1Sign(enable bool, method sign.Method, supportMethods []string, getSecretKey func(accessKey string) (string, error)) gin.HandlerFunc {
+	apiSign := sign.NewAPISign(SignValidDuration, method)
 	apiSign.SetGetSecretKey(getSecretKey)
 
 	return func(c *gin.Context) {
