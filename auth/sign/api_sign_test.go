@@ -15,7 +15,7 @@ import (
 )
 
 func testHttpServer() {
-	sign := NewAPISign(defSignValidTime)
+	sign := NewAPISign(defSignValidTime, HmacSha256)
 	sign.SetGetSecretKey(func(accessKey string) (string, error) {
 		vals := map[string]string{
 			"abc": "abc_secretKey",
@@ -118,9 +118,9 @@ func jsonSign(path string, timestamp string, body io.Reader) string {
 	if err := json.Unmarshal(byts, &b); err != nil {
 		panic(err)
 	}
-	str := b.SortToString("&")
+	str, _ := b.SortToString("&")
 
 	str = path + "?" + str + timestamp
 	fmt.Println(str)
-	return HmacSha1ToBase64(str, "abc_secretKey")
+	return HmacSha256ToBase64(str, "abc_secretKey")
 }

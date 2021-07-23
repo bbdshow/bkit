@@ -88,8 +88,11 @@ func (sign *APISign) Verify(req *http.Request, header string) error {
 			if err := json.Unmarshal(byt, &reqBody); err != nil {
 				return err
 			}
-
-			rawStr = fmt.Sprintf("%s?%s", req.URL.Path, reqBody.SortToString("&"))
+			bodyStr, err := reqBody.SortToString("&")
+			if err != nil {
+				return fmt.Errorf("SortToString %v", err)
+			}
+			rawStr = fmt.Sprintf("%s?%s", req.URL.Path, bodyStr)
 
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(byt))
 		case "multipart/form-data":
@@ -218,9 +221,9 @@ func (r RequestBodyMap) GetStringValue(key string) (string, error) {
 	return v, nil
 }
 
-func (r RequestBodyMap) SortToString(separator string) string {
+func (r RequestBodyMap) SortToString(separator string) (string, error) {
 	if len(r) == 0 {
-		return ""
+		return "", nil
 	}
 	kvs := make(KvSlice, 0)
 	for k, v := range r {
@@ -240,11 +243,29 @@ func (r RequestBodyMap) SortToString(separator string) string {
 			s = append(s, fmt.Sprintf("%s=%v", v.Key, decimal.NewFromFloat(*v.Value.(*float64)).String()))
 		case *float32:
 			s = append(s, fmt.Sprintf("%s=%v", v.Key, decimal.NewFromFloat(float64(*v.Value.(*float32))).String()))
+		case string:
+			s = append(s, fmt.Sprintf("%s=%s", v.Key, v.Value))
+		case *string:
+			s = append(s, fmt.Sprintf("%s=%s", v.Key, *v.Value.(*string)))
 		default:
-			s = append(s, fmt.Sprintf("%s=%v", v.Key, v.Value))
+			buf := make([]byte, 0)
+			buffer := bytes.NewBuffer(buf)
+			if err := json.NewEncoder(buffer).Encode(v.Value); err != nil {
+				return "", err
+			}
+			s = append(s, fmt.Sprintf("%s=%s", v.Key, string(r.TrimNewline(buffer.Bytes()))))
 		}
 	}
-	return strings.Join(s, separator)
+	return strings.Join(s, separator), nil
+}
+
+func (r RequestBodyMap) TrimNewline(buf []byte) []byte {
+	if i := len(buf) - 1; i >= 0 {
+		if buf[i] == '\n' {
+			buf = buf[:i]
+		}
+	}
+	return buf
 }
 
 type Kv struct {
