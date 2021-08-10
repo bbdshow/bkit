@@ -21,21 +21,21 @@ type TimeStringReq struct {
 	EndTime   string `json:"endTime" form:"endTime" binding:"omitempty,len=21"`
 }
 
-func (req TimeStringReq) FieldSQLCond(field string) builder.Cond {
-	cond := builder.NewCond()
+func (req TimeStringReq) FieldSQLCond(field string) []builder.Cond {
+	cond := make([]builder.Cond, 0)
 	if field == "" {
 		return cond
 	}
 	if req.StartTime != "" {
 		s, err := time.Parse("2006-01-02 15:04:05", req.StartTime)
 		if err == nil {
-			cond.And(builder.Gte{field: s.String()})
+			cond = append(cond, builder.Gte{field: s.String()})
 		}
 	}
 	if req.EndTime != "" {
 		e, err := time.Parse("2006-01-02 15:04:05", req.EndTime)
 		if err == nil {
-			cond.And(builder.Lt{field: e.String()})
+			cond = append(cond, builder.Lt{field: e.String()})
 		}
 	}
 	return cond
@@ -67,18 +67,18 @@ type TimestampReq struct {
 	EndTimestamp   int64 `json:"endTimestamp" form:"endTimestamp,default=0" binding:"omitempty,gtefield=StartTimestamp"`
 }
 
-func (req TimestampReq) FieldSQLCond(field string) builder.Cond {
-	cond := builder.NewCond()
+func (req TimestampReq) FieldSQLCond(field string) []builder.Cond {
+	cond := make([]builder.Cond, 0)
 	if field == "" {
 		return cond
 	}
 	if req.StartTimestamp > 0 {
 		s := time.Unix(req.StartTimestamp, 0)
-		cond.And(builder.Gte{field: s.String()})
+		cond = append(cond, builder.Gte{field: s.String()})
 	}
 	if req.EndTimestamp > 0 {
 		e := time.Unix(req.EndTimestamp, 0)
-		cond.And(builder.Gte{field: e.String()})
+		cond = append(cond, builder.Gte{field: e.String()})
 	}
 	return cond
 }
