@@ -21,13 +21,16 @@ func Run(server Server, deallocFunc func() error, opts ...Option) error {
 	if server == nil {
 		panic("server required")
 	}
-	var err error
 
+	errC := make(chan error, 1)
 	go func() {
-		if err := server.Run(opts...); err != nil {
-			err = errc.MultiError(err)
-		}
+		errC <- errc.MultiError(server.Run(opts...))
 	}()
+
+	err := <-errC
+	if err != nil {
+		return err
+	}
 
 	// 拦截退出信号
 	exitSignal := make(chan os.Signal, 1)
