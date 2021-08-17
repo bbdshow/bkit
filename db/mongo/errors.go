@@ -7,10 +7,9 @@ import (
 )
 
 var (
-	ErrNotMatched     = errors.New("not matched")
-	ErrMasterNotFound = errors.New("mongodb master db not found")
-	ErrSlaveNotFound  = errors.New("mongodb slave db not found")
-	ErrNoDocuments    = mongo.ErrNoDocuments
+	ErrNotMatched       = errors.New("not matched")
+	ErrInstanceNotFound = errors.New("mongodb instance db not found")
+	ErrNoDocuments      = mongo.ErrNoDocuments
 )
 
 func IsDuplicateKey(err error) bool {
