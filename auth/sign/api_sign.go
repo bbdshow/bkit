@@ -17,7 +17,7 @@ import (
 
 /*
 1. 签名头X-Signature=accessKey:signStr:timestamp (:分割不同元素)
-2. 签名方式： HmacSha1ToBase64(rawStr+timestamp, secretKey) 最终signStr是Base64编码
+2. 签名方式： Method(rawStr+timestamp, secretKey) 最终signStr是Base64编码
 3. rawStr 解释 如果是 GET请求，例子: http://example.com/hello?n=1&a=2  => /hello?a=2&n=11626167650 参数要进行字符正序
 4. 非GET请求，对于Content-Type: application/json {"n":"m","a":2} 也进行字符正序 => {"a":2,"n":"m"} 最终 a=2&n=m
 5. rawStr+timestamp = /hello?a=2&n=m1626167650 时间戳(秒)  最终在签名,携带时间戳，是为了验证签名时间有效性 当前有效性 -+10s
@@ -96,7 +96,7 @@ func (sign *APISign) Verify(req *http.Request, header string) error {
 
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(byt))
 		case "multipart/form-data":
-			rawStr, err = sortParamForm(req, true)
+			rawStr, err = SortParamForm(req, true)
 			rawStr = fmt.Sprintf("%s?%s", req.URL.Path, rawStr)
 			if err != nil {
 				return err
@@ -104,21 +104,14 @@ func (sign *APISign) Verify(req *http.Request, header string) error {
 		}
 
 	case http.MethodGet:
-		rawStr, err = sortParamForm(req, true)
+		rawStr, err = SortParamForm(req, true)
 		if err != nil {
 			return err
 		}
 	}
 	rawStr = rawStr + timestamp
-	signStrDist := ""
-	switch sign.method {
-	case HmacSha1:
-		signStrDist = HmacSha1ToBase64(rawStr, secretKey)
-	case HmacSha256:
-		signStrDist = HmacSha256ToBase64(rawStr, secretKey)
-	default:
-		return fmt.Errorf("sign method not support %s", sign.method)
-	}
+	signStrDist := HmacHash(sign.method, rawStr, secretKey)
+
 	if signStrDist != signStr {
 		return fmt.Errorf("sign method invalid rawStr:%s", rawStr)
 	}
@@ -171,8 +164,8 @@ func (sign *APISign) secretKey(accessKey string) (string, error) {
 	return "", fmt.Errorf("accessKey invalid")
 }
 
-// sortParamForm URL 和 form-data 参数
-func sortParamForm(req *http.Request, path bool) (string, error) {
+// SortParamForm URL 和 form-data 参数
+func SortParamForm(req *http.Request, path bool) (string, error) {
 	resource := req.URL.Path
 	switch filterFlags(req.Header.Get("Content-Type")) {
 	case "multipart/form-data":
@@ -205,6 +198,19 @@ func sortParamForm(req *http.Request, path bool) (string, error) {
 		}
 	}
 	return resource, nil
+}
+
+func HmacHash(method Method, rawStr, secretKey string) string {
+	dist := ""
+	switch method {
+	case HmacSha1:
+		dist = HmacSha1ToHex(rawStr, secretKey)
+	case HmacSha256:
+		dist = HmacSha256ToHex(rawStr, secretKey)
+	default:
+		dist = HmacSha256ToHex(rawStr, secretKey)
+	}
+	return dist
 }
 
 type RequestBodyMap map[string]interface{}

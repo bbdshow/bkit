@@ -21,7 +21,7 @@ type Config struct {
 	Level    int      `defval:"-1"` // -1=debug 0=info ...
 }
 
-func InitQezap(cfg Config) {
+func InitQezap(cfg *Config) {
 	_ = Qezap.Close()
 	Qezap = qezap.New(qezap.NewConfig(cfg.Addr, cfg.Module).SetFilename(cfg.Filename), zapcore.Level(cfg.Level))
 }

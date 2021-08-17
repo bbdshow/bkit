@@ -28,16 +28,16 @@ type Config struct {
 }
 
 // NewRedisClient 简化了 GET SET DEL 操作
-func NewRedisClient(config Config) (*Client, error) {
+func NewRedisClient(cfg *Config) (*Client, error) {
 	cli := redis.NewClient(&redis.Options{
-		Addr:         config.Addr,
-		Username:     config.Username,
-		Password:     config.Password,
-		DB:           config.DB,
-		MaxRetries:   config.MaxRetries,
-		DialTimeout:  config.DialTimeout,
-		ReadTimeout:  config.ReadTimeout,
-		WriteTimeout: config.WriteTimeout,
+		Addr:         cfg.Addr,
+		Username:     cfg.Username,
+		Password:     cfg.Password,
+		DB:           cfg.DB,
+		MaxRetries:   cfg.MaxRetries,
+		DialTimeout:  cfg.DialTimeout,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
 	})
 	sCmd := cli.Ping()
 	if sCmd.Err() != nil {
