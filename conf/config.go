@@ -16,8 +16,11 @@ import (
 	"strings"
 )
 
-func FlagConfigPath() string {
+func FlagConfigPath(path ...string) string {
 	configPath := "./configs/config.toml"
+	if len(path) > 0 && path[0] != "" {
+		configPath = path[0]
+	}
 	flag.StringVar(&configPath, "f", configPath, fmt.Sprintf("config file default(%s)", configPath))
 	if !flag.Parsed() {
 		flag.Parse()
