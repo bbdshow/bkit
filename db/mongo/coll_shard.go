@@ -41,14 +41,14 @@ func (coll CollShardByDay) calcDaySpan(day int) map[int]int {
 	}
 	return daySpan
 }
-func (coll CollShardByDay) collName(slot, year, month, span int) string {
-	return fmt.Sprintf("%s_%d_%d%02d_%02d", coll.prefix, slot, year, month, span)
+func (coll CollShardByDay) collName(bucket string, year, month, span int) string {
+	return fmt.Sprintf("%s_%s_%d%02d_%02d", coll.prefix, bucket, year, month, span)
 }
 
-func (coll CollShardByDay) EncodeCollName(slot int, timestamp int64) string {
+func (coll CollShardByDay) EncodeCollName(bucket string, timestamp int64) string {
 	y, m, d := time.Unix(timestamp, 0).Date()
 	s := coll.daySpan[d]
-	return coll.collName(slot, y, int(m), s)
+	return coll.collName(bucket, y, int(m), s)
 }
 
 func (coll CollShardByDay) DecodeCollName(collName string) (prefix string, index, year int, month time.Month, span int, err error) {
@@ -71,8 +71,8 @@ func (coll CollShardByDay) DecodeCollName(collName string) (prefix string, index
 
 func (coll CollShardByDay) DaySpan() map[int]int {
 	v := make(map[int]int)
-	for slot, span := range coll.daySpan {
-		v[slot] = span
+	for i, span := range coll.daySpan {
+		v[i] = span
 	}
 	return v
 }
@@ -104,7 +104,7 @@ func (coll CollShardByDay) SpanLastTime(collName string) (t time.Time, err error
 }
 
 // CollNameByStartEnd 根据开始时间和结束时间，查询出所有生成的 name
-func (coll CollShardByDay) CollNameByStartEnd(slot int, start, end int64) []string {
+func (coll CollShardByDay) CollNameByStartEnd(bucket string, start, end int64) []string {
 	startTime := time.Unix(start, 0)
 	endTime := time.Unix(end, 0)
 
@@ -121,7 +121,7 @@ func (coll CollShardByDay) CollNameByStartEnd(slot int, start, end int64) []stri
 	nameMap := make(map[string]struct{})
 	names := make([]string, 0, len(date))
 	for _, v := range date {
-		name := coll.EncodeCollName(slot, v.Unix())
+		name := coll.EncodeCollName(bucket, v.Unix())
 		_, ok := nameMap[name]
 		if !ok {
 			nameMap[name] = struct{}{}

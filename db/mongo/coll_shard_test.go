@@ -164,7 +164,7 @@ func TestCollShardByDay_EncodeCollName(t *testing.T) {
 	}
 	type args struct {
 		day       int
-		slot      int
+		bucket    string
 		timestamp int64
 	}
 	tests := []struct {
@@ -179,7 +179,7 @@ func TestCollShardByDay_EncodeCollName(t *testing.T) {
 				prefix:  "test",
 				daySpan: make(map[int]int),
 			},
-			args: args{day: 7, slot: 1, timestamp: time.Now().Unix()},
+			args: args{day: 7, bucket: "1", timestamp: time.Now().Unix()},
 			want: "test_1_202104_05",
 		},
 		{
@@ -188,7 +188,7 @@ func TestCollShardByDay_EncodeCollName(t *testing.T) {
 				prefix:  "test",
 				daySpan: make(map[int]int),
 			},
-			args: args{day: 16, slot: 1, timestamp: time.Now().Unix()},
+			args: args{day: 16, bucket: "1", timestamp: time.Now().Unix()},
 			want: "test_1_202104_02",
 		},
 	}
@@ -199,7 +199,7 @@ func TestCollShardByDay_EncodeCollName(t *testing.T) {
 				daySpan: tt.fields.daySpan,
 			}
 			coll.daySpan = coll.calcDaySpan(tt.args.day)
-			if got := coll.EncodeCollName(tt.args.slot, tt.args.timestamp); got != tt.want {
+			if got := coll.EncodeCollName(tt.args.bucket, tt.args.timestamp); got != tt.want {
 				t.Errorf("EncodeCollName() = %v, want %v", got, tt.want)
 			}
 		})
