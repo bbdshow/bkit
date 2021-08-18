@@ -10,7 +10,7 @@ import (
 
 // CollShardByTime 集合名按时间
 type CollShardByDay struct {
-	prefix string
+	Prefix string
 	// 天范围
 	daySpan map[int]int
 }
@@ -19,7 +19,7 @@ type CollShardByDay struct {
 // prefix 集合名前缀
 // day>=31 | day<=0 则按月分片,  day = x 则每 x 天为一个分片区间
 func NewCollShardByDay(prefix string, day int) CollShardByDay {
-	coll := CollShardByDay{prefix: prefix, daySpan: make(map[int]int)}
+	coll := CollShardByDay{Prefix: prefix, daySpan: make(map[int]int)}
 	coll.daySpan = coll.calcDaySpan(day)
 	return coll
 }
@@ -42,7 +42,7 @@ func (coll CollShardByDay) calcDaySpan(day int) map[int]int {
 	return daySpan
 }
 func (coll CollShardByDay) collName(bucket string, year, month, span int) string {
-	return fmt.Sprintf("%s_%s_%d%02d_%02d", coll.prefix, bucket, year, month, span)
+	return fmt.Sprintf("%s_%s_%d%02d_%02d", coll.Prefix, bucket, year, month, span)
 }
 
 func (coll CollShardByDay) EncodeCollName(bucket string, timestamp int64) string {
