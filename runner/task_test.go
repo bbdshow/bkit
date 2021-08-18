@@ -18,13 +18,13 @@ func TestNewTaskServer(t *testing.T) {
 }
 
 func runnerTask(ctx context.Context) Server {
-	srv := NewTaskServer()
-	if err := srv.AddTimeAfterFunc(time.Second, func() {
+	s := NewTaskServer()
+	if err := s.AddTimeAfterFunc(time.Second, func(ctx context.Context) {
 		execWithCtx(ctx)
 	}); err != nil {
 		panic(err)
 	}
-	return srv
+	return s
 }
 
 func execWithCtx(ctx context.Context) {

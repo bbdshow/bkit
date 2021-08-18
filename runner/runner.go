@@ -66,7 +66,7 @@ type Config struct {
 	Context      context.Context
 }
 
-func (c *Config) init() *Config {
+func (c *Config) Init() *Config {
 	if err := defval.ParseDefaultVal(c); err != nil {
 		panic(err)
 	}
@@ -80,7 +80,7 @@ func (c *Config) String() string {
 	return fmt.Sprintf("listenAddr: %s readTimeout: %s writeTimeout: %s", c.ListenAddr, c.ReadTimeout, c.WriteTimeout)
 }
 
-func (c *Config) withOptions(opts ...Option) *Config {
+func (c *Config) WithOptions(opts ...Option) *Config {
 	for _, opt := range opts {
 		opt.apply(c)
 	}
