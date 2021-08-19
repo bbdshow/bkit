@@ -41,3 +41,7 @@ func (s *GrpcServer) Shutdown(ctx context.Context) error {
 	log.Printf("grpc server shutdown \n")
 	return nil
 }
+
+func (s *GrpcServer) Server() *grpc.Server {
+	return s.server
+}
