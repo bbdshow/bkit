@@ -51,15 +51,14 @@ func (sc ShardCollection) EncodeCollName(bucket string, timestamp int64) string 
 	return sc.collName(bucket, y, int(m), s)
 }
 
-func (sc ShardCollection) DecodeCollName(collName string) (prefix string, index, year int, month time.Month, span int, err error) {
+func (sc ShardCollection) DecodeCollName(collName string) (prefix, bucket string, year int, month time.Month, span int, err error) {
 	str := strings.Split(collName, sc.Sep)
 	if len(str) != 4 {
 		err = fmt.Errorf("invalid collection name %s", collName)
 		return
 	}
 	prefix = str[0]
-	di, _ := strconv.ParseInt(str[1], 10, 64)
-	index = int(di)
+	bucket = str[1]
 	y, _ := strconv.ParseInt(str[2][:4], 10, 64)
 	year = int(y)
 	m, _ := strconv.ParseInt(str[2][4:], 10, 64)
@@ -85,21 +84,21 @@ func (sc ShardCollection) CollNameDate(collName string) (time.Time, error) {
 	return time.Date(y, m, 0, 0, 0, 0, 0, time.Local), nil
 }
 
-// SpanLastTime 当前集合时间分区内，最后一天
-func (sc ShardCollection) SpanLastTime(collName string) (t time.Time, err error) {
-	_, _, y1, m1, n1Span, err := sc.DecodeCollName(collName)
+// SepTime 当前集合时间分区内下一个分隔时间
+func (sc ShardCollection) SepTime(collName string) (t time.Time, err error) {
+	_, _, y, m, n, err := sc.DecodeCollName(collName)
 	if err != nil {
 		return t, err
 	}
 	minDay := math.MaxInt32
 	for d, span := range sc.daySpan {
-		if span > n1Span {
+		if span > n {
 			if d < minDay {
 				minDay = d
 			}
 		}
 	}
-	t = time.Date(y1, m1, minDay, 0, 0, 0, 0, time.Local)
+	t = time.Date(y, m, minDay, 0, 0, 0, 0, time.Local)
 	return t, nil
 }
 
