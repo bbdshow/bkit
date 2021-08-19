@@ -8,7 +8,7 @@ import (
 )
 
 type HttpServer struct {
-	config  *Config
+	c       *Config
 	handler http.Handler
 	httpSrv *http.Server
 }
@@ -22,15 +22,15 @@ func NewHttpServer(handler http.Handler) *HttpServer {
 
 // Run 监听端口
 func (s *HttpServer) Run(opts ...Option) error {
-	s.config = new(Config).Init().WithOptions(opts...)
+	s.c = new(Config).Init().WithOptions(opts...)
 
 	s.httpSrv = &http.Server{
-		Addr:         s.config.ListenAddr,
+		Addr:         s.c.ListenAddr,
 		Handler:      s.handler,
-		ReadTimeout:  s.config.ReadTimeout,
-		WriteTimeout: s.config.WriteTimeout,
+		ReadTimeout:  s.c.ReadTimeout,
+		WriteTimeout: s.c.WriteTimeout,
 	}
-	log.Printf("http server %s\n", s.config)
+	log.Printf("http server %s\n", s.c)
 	s.httpSrv.RegisterOnShutdown(func() {
 		log.Printf("current goroutine number: %d", runtime.NumGoroutine())
 	})

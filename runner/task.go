@@ -10,13 +10,13 @@ import (
 )
 
 type TaskServer struct {
-	config *Config
+	c *Config
 
 	cancel func()
 	wg     *sync.WaitGroup
 
 	afters []timeAfterFunc
-	c      *cron.Cron
+	cron   *cron.Cron
 }
 
 func NewTaskServer() *TaskServer {
@@ -33,8 +33,8 @@ type timeAfterFunc struct {
 }
 
 func (s *TaskServer) Run(opts ...Option) error {
-	s.config = new(Config).Init().WithOptions(opts...)
-	s.config.Context, s.cancel = context.WithCancel(s.config.Context)
+	s.c = new(Config).Init().WithOptions(opts...)
+	s.c.Context, s.cancel = context.WithCancel(s.c.Context)
 
 	for _, v := range s.afters {
 		// 注册并运行 time.AfterFunc 任务
@@ -55,11 +55,11 @@ func (s *TaskServer) Run(opts ...Option) error {
 			}
 		}
 		// 运行
-		go exec(s.config.Context, s.wg, v)
+		go exec(s.c.Context, s.wg, v)
 	}
 
-	if s.c != nil {
-		s.c.Start()
+	if s.cron != nil {
+		s.cron.Start()
 	}
 
 	return nil
@@ -68,8 +68,8 @@ func (s *TaskServer) Run(opts ...Option) error {
 func (s *TaskServer) Shutdown(ctx context.Context) error {
 	s.cancel()
 	// 等待任务执行完
-	if s.c != nil {
-		<-s.c.Stop().Done()
+	if s.cron != nil {
+		<-s.cron.Stop().Done()
 	}
 	s.wg.Wait()
 
@@ -92,10 +92,10 @@ func (s *TaskServer) AddTimeAfterFunc(d time.Duration, fn func(ctx context.Conte
 }
 
 func (s *TaskServer) AddCronFunc(spec string, fn func()) error {
-	if s.c == nil {
-		s.c = cron.New(cron.WithSeconds())
+	if s.cron == nil {
+		s.cron = cron.New(cron.WithSeconds())
 	}
-	_, err := s.c.AddFunc(spec, fn)
+	_, err := s.cron.AddFunc(spec, fn)
 	if err != nil {
 		return err
 	}
