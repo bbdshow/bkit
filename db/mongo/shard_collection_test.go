@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestCollShardByDay_calcDaySpan(t *testing.T) {
+func TestShardCollection_calcDaySpan(t *testing.T) {
 	type fields struct {
 		prefix  string
 		daySpan map[int]int
@@ -146,8 +146,8 @@ func TestCollShardByDay_calcDaySpan(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			coll := CollShardByDay{
-				prefix:  tt.fields.prefix,
+			coll := ShardCollection{
+				Prefix:  tt.fields.prefix,
 				daySpan: tt.fields.daySpan,
 			}
 			if got := coll.calcDaySpan(tt.args.day); !reflect.DeepEqual(got, tt.want) {
@@ -157,7 +157,7 @@ func TestCollShardByDay_calcDaySpan(t *testing.T) {
 	}
 }
 
-func TestCollShardByDay_EncodeCollName(t *testing.T) {
+func TestShardCollection_EncodeCollName(t *testing.T) {
 	type fields struct {
 		prefix  string
 		daySpan map[int]int
@@ -194,8 +194,8 @@ func TestCollShardByDay_EncodeCollName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			coll := CollShardByDay{
-				prefix:  tt.fields.prefix,
+			coll := ShardCollection{
+				Prefix:  tt.fields.prefix,
 				daySpan: tt.fields.daySpan,
 			}
 			coll.daySpan = coll.calcDaySpan(tt.args.day)

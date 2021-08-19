@@ -8,23 +8,23 @@ import (
 	"time"
 )
 
-// CollShardByTime 集合名按时间
-type CollShardByDay struct {
+// ShardCollection 分片集合名
+type ShardCollection struct {
 	Prefix string
+	Sep    string // 分隔符
 	// 天范围
 	daySpan map[int]int
 }
 
-// NewCollShardByTime
 // prefix 集合名前缀
 // day>=31 | day<=0 则按月分片,  day = x 则每 x 天为一个分片区间
-func NewCollShardByDay(prefix string, day int) CollShardByDay {
-	coll := CollShardByDay{Prefix: prefix, daySpan: make(map[int]int)}
-	coll.daySpan = coll.calcDaySpan(day)
-	return coll
+func NewShardCollection(prefix string, day int) ShardCollection {
+	sc := ShardCollection{Prefix: prefix, daySpan: make(map[int]int), Sep: "_"}
+	sc.daySpan = sc.calcDaySpan(day)
+	return sc
 }
 
-func (coll CollShardByDay) calcDaySpan(day int) map[int]int {
+func (sc ShardCollection) calcDaySpan(day int) map[int]int {
 	if day <= 0 || day > 31 {
 		day = 31
 	}
@@ -41,18 +41,18 @@ func (coll CollShardByDay) calcDaySpan(day int) map[int]int {
 	}
 	return daySpan
 }
-func (coll CollShardByDay) collName(bucket string, year, month, span int) string {
-	return fmt.Sprintf("%s_%s_%d%02d_%02d", coll.Prefix, bucket, year, month, span)
+func (sc ShardCollection) collName(bucket string, year, month, span int) string {
+	return fmt.Sprintf("%s%s%s%s%d%02d%s%02d", sc.Prefix, sc.Sep, bucket, sc.Sep, year, month, sc.Sep, span)
 }
 
-func (coll CollShardByDay) EncodeCollName(bucket string, timestamp int64) string {
+func (sc ShardCollection) EncodeCollName(bucket string, timestamp int64) string {
 	y, m, d := time.Unix(timestamp, 0).Date()
-	s := coll.daySpan[d]
-	return coll.collName(bucket, y, int(m), s)
+	s := sc.daySpan[d]
+	return sc.collName(bucket, y, int(m), s)
 }
 
-func (coll CollShardByDay) DecodeCollName(collName string) (prefix string, index, year int, month time.Month, span int, err error) {
-	str := strings.Split(collName, "_")
+func (sc ShardCollection) DecodeCollName(collName string) (prefix string, index, year int, month time.Month, span int, err error) {
+	str := strings.Split(collName, sc.Sep)
 	if len(str) != 4 {
 		err = fmt.Errorf("invalid collection name %s", collName)
 		return
@@ -69,16 +69,16 @@ func (coll CollShardByDay) DecodeCollName(collName string) (prefix string, index
 	return
 }
 
-func (coll CollShardByDay) DaySpan() map[int]int {
+func (sc ShardCollection) DaySpan() map[int]int {
 	v := make(map[int]int)
-	for i, span := range coll.daySpan {
+	for i, span := range sc.daySpan {
 		v[i] = span
 	}
 	return v
 }
 
-func (coll CollShardByDay) CollNameDate(collName string) (time.Time, error) {
-	_, _, y, m, _, err := coll.DecodeCollName(collName)
+func (sc ShardCollection) CollNameDate(collName string) (time.Time, error) {
+	_, _, y, m, _, err := sc.DecodeCollName(collName)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -86,13 +86,13 @@ func (coll CollShardByDay) CollNameDate(collName string) (time.Time, error) {
 }
 
 // SpanLastTime 当前集合时间分区内，最后一天
-func (coll CollShardByDay) SpanLastTime(collName string) (t time.Time, err error) {
-	_, _, y1, m1, n1Span, err := coll.DecodeCollName(collName)
+func (sc ShardCollection) SpanLastTime(collName string) (t time.Time, err error) {
+	_, _, y1, m1, n1Span, err := sc.DecodeCollName(collName)
 	if err != nil {
 		return t, err
 	}
 	minDay := math.MaxInt32
-	for d, span := range coll.daySpan {
+	for d, span := range sc.daySpan {
 		if span > n1Span {
 			if d < minDay {
 				minDay = d
@@ -104,7 +104,7 @@ func (coll CollShardByDay) SpanLastTime(collName string) (t time.Time, err error
 }
 
 // CollNameByStartEnd 根据开始时间和结束时间，查询出所有生成的 name
-func (coll CollShardByDay) CollNameByStartEnd(bucket string, start, end int64) []string {
+func (sc ShardCollection) CollNameByStartEnd(bucket string, start, end int64) []string {
 	startTime := time.Unix(start, 0)
 	endTime := time.Unix(end, 0)
 
@@ -121,7 +121,7 @@ func (coll CollShardByDay) CollNameByStartEnd(bucket string, start, end int64) [
 	nameMap := make(map[string]struct{})
 	names := make([]string, 0, len(date))
 	for _, v := range date {
-		name := coll.EncodeCollName(bucket, v.Unix())
+		name := sc.EncodeCollName(bucket, v.Unix())
 		_, ok := nameMap[name]
 		if !ok {
 			nameMap[name] = struct{}{}
