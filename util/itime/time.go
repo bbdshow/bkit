@@ -26,3 +26,9 @@ func BeforeDayDate(day int) time.Time {
 	y := time.Now().AddDate(0, 0, -int(math.Abs(float64(day))))
 	return time.Date(y.Year(), y.Month(), y.Day(), 0, 0, 0, 0, time.Local)
 }
+
+func UnixSecToDate(sec int64) time.Time {
+	y, m, d := time.Unix(sec, 0).Date()
+	date := time.Date(y, m, d, 0, 0, 0, 0, time.Local)
+	return date
+}
