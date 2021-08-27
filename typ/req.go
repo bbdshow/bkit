@@ -17,8 +17,8 @@ type LoginReq struct {
 
 type TimeStringReq struct {
 	// 格式 2006-01-02 15:04:05
-	StartTime string `json:"startTime" form:"startTime" binding:"omitempty,len=21"`
-	EndTime   string `json:"endTime" form:"endTime" binding:"omitempty,len=21"`
+	StartTime string `json:"startTime" form:"startTime"`
+	EndTime   string `json:"endTime" form:"endTime"`
 }
 
 func (req TimeStringReq) FieldSQLCond(field string) []builder.Cond {
