@@ -13,7 +13,7 @@ const (
 	nullTag   = "null"
 )
 
-// NullVal 清空字段当前值 对指针无效
+// NullVal 清空字段当前值
 func InitialNullVal(v interface{}) error {
 	val := reflect.ValueOf(v).Elem()
 	return initial(nullTag, val)
@@ -22,8 +22,25 @@ func InitialNullVal(v interface{}) error {
 func initial(tag string, val reflect.Value) error {
 	for i := 0; i < val.NumField(); i++ {
 		filed := val.Field(i)
-		kind := filed.Kind().String()
-		if kind == "struct" {
+		if filed.Kind() == reflect.Slice {
+			for ii := 0; ii < filed.Len(); ii++ {
+				if filed.Index(ii).Kind() == reflect.Struct {
+					if err := initial(tag, filed.Index(ii)); err != nil {
+						return err
+					}
+				}
+			}
+		}
+
+		if filed.Kind() == reflect.Ptr {
+			if !filed.IsNil() {
+				if err := initial(tag, filed.Elem()); err != nil {
+					return err
+				}
+			}
+		}
+
+		if filed.Kind() == reflect.Struct {
 			if err := initial(tag, filed); err != nil {
 				return err
 			}
@@ -95,19 +112,17 @@ func initial(tag string, val reflect.Value) error {
 	return nil
 }
 
-// ParseDefaultVal 提取当前结构的 default tag 作为field的默认值
+// ParseDefaultVal 提取当前结构的 default tag 作为field的默认值, 只对 Struct 有效
 func ParseDefaultVal(v interface{}) error {
 	val := reflect.ValueOf(v).Elem()
 	return parse(defValTag, val)
 }
 
 func parse(tag string, val reflect.Value) error {
-
 	for i := 0; i < val.NumField(); i++ {
 		filed := val.Field(i)
-		kind := filed.Kind().String()
-		//fmt.Println(kind)
-		if kind == "struct" {
+
+		if filed.Kind() == reflect.Struct {
 			if err := parse(tag, filed); err != nil {
 				return err
 			}

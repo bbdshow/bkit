@@ -20,6 +20,8 @@ type def struct {
 	MyDuration    time.Duration     `defval:"30s"` // 30s
 	MyStruct      MyStruct
 	MyStruct2
+	Ptr     *Ptr
+	Conns   []Conn
 	NullVal string `defval:"30s" null:""`
 }
 
@@ -32,6 +34,14 @@ type MyStruct struct {
 type MyStruct2 struct {
 	Value int32    `defval:"8"`
 	S2    []string `defval:"xx,xx,xx"`
+}
+
+type Conn struct {
+	Password string `defval:"Password" null:""`
+}
+
+type Ptr struct {
+	Value string `defval:"Point" null:""`
 }
 
 func TestParseDefaultVal(t *testing.T) {
@@ -62,18 +72,25 @@ func TestParseDefaultVal(t *testing.T) {
 }
 
 func TestInitialNullVal(t *testing.T) {
-	def := def{}
+	def := def{
+		Ptr: &Ptr{
+			Value: "Point",
+		},
+	}
 	if err := ParseDefaultVal(&def); err != nil {
 		t.Fatal(err)
 	}
+	def.Conns = []Conn{{Password: "Password"}}
 	if def.NullVal != "30s" {
 		t.Fatal(def.NullVal)
 	}
-
+	fmt.Println("before", def, def.Ptr)
 	if err := InitialNullVal(&def); err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println("after", def, def.Ptr)
 	if def.NullVal != "" {
 		t.Fatal("should null string", def.NullVal)
 	}
+
 }
