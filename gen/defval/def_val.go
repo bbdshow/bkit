@@ -13,7 +13,7 @@ const (
 	nullTag   = "null"
 )
 
-// NullVal 清空字段当前值
+// NullVal 清空字段当前值 对指针无效
 func InitialNullVal(v interface{}) error {
 	val := reflect.ValueOf(v).Elem()
 	return initial(nullTag, val)

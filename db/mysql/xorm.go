@@ -12,7 +12,7 @@ type Xorm struct {
 }
 
 // NewXorm  EngineGroup
-func NewXorm(cfg *Config) *Xorm {
+func NewXorm(cfg Config) *Xorm {
 	master := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&loc=%v", cfg.Master.Username,
 		cfg.Master.Password, cfg.Master.HostPort, cfg.Master.Database, "Asia%2fShanghai")
 	conns := []string{master}

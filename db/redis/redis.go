@@ -28,7 +28,7 @@ type Config struct {
 }
 
 // NewRedisClient 简化了 GET SET DEL 操作
-func NewRedisClient(cfg *Config) (*Client, error) {
+func NewRedisClient(cfg Config) (*Client, error) {
 	cli := redis.NewClient(&redis.Options{
 		Addr:         cfg.Addr,
 		Username:     cfg.Username,

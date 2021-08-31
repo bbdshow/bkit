@@ -18,14 +18,14 @@ type Config struct {
 
 // Groups Mongodb 群组实例
 type Groups struct {
-	Config *Config
+	Config Config
 
 	lock      sync.RWMutex
 	instances map[string]*Database
 }
 
 // NewCluster 简单的多实例管理
-func NewGroups(cfg *Config) (*Groups, error) {
+func NewGroups(cfg Config) (*Groups, error) {
 	g := &Groups{
 		Config:    cfg,
 		instances: make(map[string]*Database),
