@@ -14,7 +14,6 @@ require (
 	github.com/pelletier/go-toml v1.9.3
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shopspring/decimal v1.2.0
-	github.com/spf13/viper v1.8.0
 	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
 	github.com/swaggo/gin-swagger v1.3.0
 	go.uber.org/zap v1.17.0

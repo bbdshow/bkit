@@ -7,7 +7,6 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/bbdshow/bkit/gen/defval"
 	ptoml "github.com/pelletier/go-toml"
-	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
@@ -114,6 +113,3 @@ func MarshalToFile(config interface{}, filename string) error {
 	_, err = f.Write(byts)
 	return err
 }
-
-// Viper 提供Viper单实例使用
-var Viper = viper.New()
