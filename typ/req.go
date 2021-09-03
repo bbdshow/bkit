@@ -1,11 +1,8 @@
 package typ
 
 import (
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"fmt"
 	"time"
-	"xorm.io/builder"
 )
 
 type LoginReq struct {
@@ -15,42 +12,44 @@ type LoginReq struct {
 	Password string `json:"password" binding:"required,len=32"`
 }
 
+const dateTime = "2006-01-02 15:04:05"
+
 type TimeStringReq struct {
 	// 格式 2006-01-02 15:04:05
 	StartTime string `json:"startTime" form:"startTime"`
 	EndTime   string `json:"endTime" form:"endTime"`
 }
 
-func (req TimeStringReq) FieldSQLCond(field string) []builder.Cond {
-	cond := make([]builder.Cond, 0)
+func (req TimeStringReq) FieldSQLCond(field string) []string {
+	cond := make([]string, 0)
 	if field == "" {
 		return cond
 	}
 	if req.StartTime != "" {
-		s, err := time.Parse("2006-01-02 15:04:05", req.StartTime)
+		_, err := time.Parse(dateTime, req.StartTime)
 		if err == nil {
-			cond = append(cond, builder.Gte{field: s.String()})
+			cond = append(cond, fmt.Sprintf("%s >= %s", field, req.StartTime))
 		}
 	}
 	if req.EndTime != "" {
-		e, err := time.Parse("2006-01-02 15:04:05", req.EndTime)
+		_, err := time.Parse(dateTime, req.EndTime)
 		if err == nil {
-			cond = append(cond, builder.Lt{field: e.String()})
+			cond = append(cond, fmt.Sprintf("%s < %s", field, req.EndTime))
 		}
 	}
 	return cond
 }
 
-func (req TimeStringReq) FieldMongoBson() (bson.M, bool) {
-	filter := bson.M{}
+func (req TimeStringReq) FieldMgoBson() (map[string]interface{}, bool) {
+	filter := map[string]interface{}{}
 	if req.StartTime != "" {
-		s, err := time.Parse("2006-01-02 15:04:05", req.StartTime)
+		s, err := time.Parse(dateTime, req.StartTime)
 		if err == nil {
 			filter["$gte"] = s
 		}
 	}
 	if req.EndTime != "" {
-		e, err := time.Parse("2006-01-02 15:04:05", req.EndTime)
+		e, err := time.Parse(dateTime, req.EndTime)
 		if err == nil {
 			filter["$lt"] = e
 		}
@@ -62,29 +61,29 @@ func (req TimeStringReq) FieldMongoBson() (bson.M, bool) {
 }
 
 type TimestampReq struct {
-	// Unix 时间戳
+	// Unix 时间戳 秒级别
 	StartTimestamp int64 `json:"startTimestamp" form:"startTimestamp,default=0" binding:"omitempty,min=0"`
 	EndTimestamp   int64 `json:"endTimestamp" form:"endTimestamp,default=0" binding:"omitempty,gtefield=StartTimestamp"`
 }
 
-func (req TimestampReq) FieldSQLCond(field string) []builder.Cond {
-	cond := make([]builder.Cond, 0)
+func (req TimestampReq) FieldSQLCond(field string) []string {
+	cond := make([]string, 0)
 	if field == "" {
 		return cond
 	}
 	if req.StartTimestamp > 0 {
 		s := time.Unix(req.StartTimestamp, 0)
-		cond = append(cond, builder.Gte{field: s.String()})
+		cond = append(cond, fmt.Sprintf("%s >= %s", field, s.Format(dateTime)))
 	}
 	if req.EndTimestamp > 0 {
 		e := time.Unix(req.EndTimestamp, 0)
-		cond = append(cond, builder.Gte{field: e.String()})
+		cond = append(cond, fmt.Sprintf("%s < %s", field, e.Format(dateTime)))
 	}
 	return cond
 }
 
-func (req TimestampReq) FieldMongoBson() (bson.M, bool) {
-	filter := bson.M{}
+func (req TimestampReq) FieldMgoBson() (map[string]interface{}, bool) {
+	filter := map[string]interface{}{}
 	if req.StartTimestamp > 0 {
 		s := time.Unix(req.StartTimestamp, 0)
 		filter["$gte"] = s
@@ -104,12 +103,12 @@ type PageReq struct {
 	Size int `json:"size" form:"size,default=20" binding:"required,gte=1,lte=1000"`
 }
 
-func (req PageReq) Limit() (limit, start int) {
+func (req PageReq) LimitStart() (limit, start int) {
 	return req.Size, (req.Page - 1) * req.Size
 }
 
-func (req PageReq) FindPage(opt *options.FindOptions) *options.FindOptions {
-	return opt.SetLimit(int64(req.Size)).SetSkip(int64((req.Page - 1) * req.Size))
+func (req PageReq) Skip() int64 {
+	return int64((req.Page - 1) * req.Size)
 }
 
 type IdReq struct {
@@ -118,18 +117,6 @@ type IdReq struct {
 
 type IdOmitReq struct {
 	IdReq `json:"id" form:"id" binding:"omitempty,gt=0"`
-}
-
-type ObjectIdReq struct {
-	Id string `json:"id" form:"id" binding:"required,len=24"`
-}
-
-func (req ObjectIdReq) ObjectId() (primitive.ObjectID, error) {
-	return primitive.ObjectIDFromHex(req.Id)
-}
-
-type ObjectIdOmitReq struct {
-	ObjectIdReq `json:"id" form:"id" binding:"omitempty,len=24"`
 }
 
 type UidReq struct {

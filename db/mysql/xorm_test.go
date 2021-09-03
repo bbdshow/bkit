@@ -1,7 +1,7 @@
 package mysql
 
 import (
-	"github.com/bbdshow/bkit/tests"
+	"fmt"
 	"testing"
 	"time"
 )
@@ -33,5 +33,5 @@ func TestXorm(t *testing.T) {
 	if _, err := x.Where("1 = 1").Get(kv); err != nil {
 		t.Fatal(err)
 	}
-	tests.PrintBeautifyJSON(kv)
+	fmt.Println(kv)
 }
