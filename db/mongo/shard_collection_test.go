@@ -1,6 +1,7 @@
 package mongo
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -204,4 +205,16 @@ func TestShardCollection_EncodeCollName(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestShardCollection_SepTime(t *testing.T) {
+	cs := NewShardCollection("logging", 31)
+
+	cn := "lg_ht5csu_202108_01"
+
+	sep, err := cs.SepTime(cn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(sep.String())
 }

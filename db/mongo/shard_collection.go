@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -90,15 +89,22 @@ func (sc ShardCollection) SepTime(collName string) (t time.Time, err error) {
 	if err != nil {
 		return t, err
 	}
-	minDay := math.MaxInt32
+	seps := map[int]int{}
 	for d, span := range sc.daySpan {
-		if span > n {
-			if d < minDay {
-				minDay = d
+		v, ok := seps[span]
+		if ok {
+			if d > v {
+				seps[span] = d
 			}
+		} else {
+			seps[span] = d
 		}
 	}
-	t = time.Date(y, m, minDay, 0, 0, 0, 0, time.Local)
+	day, ok := seps[n]
+	if !ok {
+		return t, fmt.Errorf("calc sep %d not exists", n)
+	}
+	t = time.Date(y, m, day, 0, 0, 0, 0, time.Local)
 	return t, nil
 }
 
