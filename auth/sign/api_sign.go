@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/bbdshow/bkit/caches"
-	"github.com/shopspring/decimal"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -13,6 +11,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bbdshow/bkit/caches"
+	"github.com/shopspring/decimal"
 )
 
 /*

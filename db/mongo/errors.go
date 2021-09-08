@@ -2,8 +2,9 @@ package mongo
 
 import (
 	"errors"
-	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var (

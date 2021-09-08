@@ -3,10 +3,11 @@ package oss
 import (
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/sts"
 	aliOss "github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"io"
 )
 
 type AliOSSConfig struct {

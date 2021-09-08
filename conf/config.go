@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/bbdshow/bkit/gen/defval"
-	ptoml "github.com/pelletier/go-toml"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
+
+	"github.com/BurntSushi/toml"
+	"github.com/bbdshow/bkit/gen/defval"
+	ptoml "github.com/pelletier/go-toml"
+	"gopkg.in/yaml.v3"
 )
 
 func FlagConfigPath(path ...string) string {

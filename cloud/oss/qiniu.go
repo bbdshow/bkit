@@ -3,9 +3,9 @@ package oss
 import (
 	"context"
 	"fmt"
-	"github.com/qiniu/api.v7/v7/auth"
 	"io"
 
+	"github.com/qiniu/api.v7/v7/auth"
 	"github.com/qiniu/api.v7/v7/storage"
 )
 
