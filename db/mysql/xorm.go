@@ -36,15 +36,14 @@ func NewXorm(cfg Config) *Xorm {
 	x := &Xorm{
 		EngineGroup: engine,
 	}
-
 	return x
 }
 
-// TransactionWithSession 支持事务嵌套，如果事务已经开始，则此事务失效事务的步骤
-// 传入的 session 可以是Master/Slave/上层传入
+// TransactionWithSession  support transaction nested
+// if tx is started, sess will not commit
 func (x *Xorm) TransactionWithSession(sess *xorm.Session, tx func(sess *xorm.Session) error) error {
 	if x.isStartTx(sess) {
-		// 只执行，此时相当上个事务的一个步骤
+		// exec, be equal to steps
 		return tx(sess)
 	}
 
@@ -68,7 +67,7 @@ func (x *Xorm) isStartTx(sess *xorm.Session) bool {
 	return lastSql == "BEGIN TRANSACTION" || lastSql == "ROLL BACK" || lastSql == "COMMIT"
 }
 
-// Transaction Master 事务
+// Transaction master transaction
 func (x *Xorm) Transaction(tx func(sess *xorm.Session) error) error {
 	_, err := x.Engine.Transaction(func(session *xorm.Session) (interface{}, error) {
 		return nil, tx(session)

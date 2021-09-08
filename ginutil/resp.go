@@ -66,7 +66,7 @@ func Resp(c *gin.Context, httpCode int, data interface{}, err error) {
 		}
 		switch code {
 		case errc.InternalErr:
-			// 拦截响应中间件已经打日志
+			// handler respBody write logging
 			respErr := &ResponseErr{
 				Method:   c.Request.Method,
 				Path:     c.Request.URL.RequestURI(),
@@ -77,13 +77,13 @@ func Resp(c *gin.Context, httpCode int, data interface{}, err error) {
 				Error:    message,
 			}
 			traceId := logs.Qezap.TraceID(c.Request.Context())
-			logs.Qezap.Error("内部错误", zap.Any("respErr", respErr),
+			logs.Qezap.Error("InternalException", zap.Any("respErr", respErr),
 				logs.Qezap.ConditionOne(respErr.Path),
 				logs.Qezap.ConditionTwo(respErr.Method),
 				logs.Qezap.ConditionThree(respErr.IP),
 				logs.Qezap.FieldTraceID(c.Request.Context()),
 				zap.String("latency", time.Now().Sub(traceId.Time()).String()))
-			// 屏蔽掉系统错误
+			// hide system error
 			message = errc.Messages[code]
 		}
 	}
@@ -113,7 +113,7 @@ func httpStatus(status ...int) int {
 	return http.StatusOK
 }
 
-// respWriter 用于 dump response body 使用
+// respWriter use to dump response body
 type respWriter struct {
 	gin.ResponseWriter
 	body *bytes.Buffer

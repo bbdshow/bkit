@@ -13,7 +13,7 @@ const (
 	nullTag   = "null"
 )
 
-// NullVal 清空字段当前值
+// NullVal if tag have null, field[i] set golang default value
 func InitialNullVal(v interface{}) error {
 	val := reflect.ValueOf(v).Elem()
 	return initial(nullTag, val)
@@ -21,27 +21,27 @@ func InitialNullVal(v interface{}) error {
 
 func initial(tag string, val reflect.Value) error {
 	for i := 0; i < val.NumField(); i++ {
-		filed := val.Field(i)
-		if filed.Kind() == reflect.Slice {
-			for ii := 0; ii < filed.Len(); ii++ {
-				if filed.Index(ii).Kind() == reflect.Struct {
-					if err := initial(tag, filed.Index(ii)); err != nil {
+		field := val.Field(i)
+		if field.Kind() == reflect.Slice {
+			for ii := 0; ii < field.Len(); ii++ {
+				if field.Index(ii).Kind() == reflect.Struct {
+					if err := initial(tag, field.Index(ii)); err != nil {
 						return err
 					}
 				}
 			}
 		}
 
-		if filed.Kind() == reflect.Ptr {
-			if !filed.IsNil() {
-				if err := initial(tag, filed.Elem()); err != nil {
+		if field.Kind() == reflect.Ptr {
+			if !field.IsNil() {
+				if err := initial(tag, field.Elem()); err != nil {
 					return err
 				}
 			}
 		}
 
-		if filed.Kind() == reflect.Struct {
-			if err := initial(tag, filed); err != nil {
+		if field.Kind() == reflect.Struct {
+			if err := initial(tag, field); err != nil {
 				return err
 			}
 		}
@@ -51,68 +51,68 @@ func initial(tag string, val reflect.Value) error {
 			continue
 		}
 
-		typ := filed.Type().String()
+		typ := field.Type().String()
 		switch typ {
 		case "int8", "int16", "int", "int32", "int64":
-			if filed.CanSet() {
-				filed.SetInt(0)
+			if field.CanSet() {
+				field.SetInt(0)
 			}
 		case "uint8", "uint16", "uint", "uint32", "uint64":
-			if filed.CanSet() {
-				filed.SetUint(0)
+			if field.CanSet() {
+				field.SetUint(0)
 			}
 		case "float32", "float64":
-			if filed.CanSet() {
-				filed.SetFloat(0)
+			if field.CanSet() {
+				field.SetFloat(0)
 			}
 		case "bool":
-			if filed.CanSet() {
-				filed.SetBool(false)
+			if field.CanSet() {
+				field.SetBool(false)
 			}
 		case "string":
-			if filed.CanSet() {
-				filed.SetString("")
+			if field.CanSet() {
+				field.SetString("")
 			}
 		case "time.Duration":
-			if filed.CanSet() {
-				filed.SetInt(0)
+			if field.CanSet() {
+				field.SetInt(0)
 			}
 		case "[]int8", "[]int16", "[]int", "[]int32", "[]int64":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
-			filed.Set(reflect.ValueOf(nil))
+			field.Set(reflect.ValueOf(nil))
 		case "[]uint8", "[]uint16", "[]uint", "[]uint32", "[]uint64":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
-			filed.Set(reflect.ValueOf(nil))
+			field.Set(reflect.ValueOf(nil))
 		case "[]float32", "[]float64":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
-			filed.Set(reflect.ValueOf(nil))
+			field.Set(reflect.ValueOf(nil))
 		case "[]bool":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
-			filed.Set(reflect.ValueOf(nil))
+			field.Set(reflect.ValueOf(nil))
 		case "[]string":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
-			filed.Set(reflect.ValueOf(nil))
+			field.Set(reflect.ValueOf(nil))
 		case "map[string]string":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
-			filed.Set(reflect.ValueOf(nil))
+			field.Set(reflect.ValueOf(nil))
 		}
 	}
 	return nil
 }
 
-// ParseDefaultVal 提取当前结构的 default tag 作为field的默认值, 只对 Struct 有效
+// ParseDefaultVal if tag have defValTag, field[i] setting defval="" value
 func ParseDefaultVal(v interface{}) error {
 	val := reflect.ValueOf(v).Elem()
 	return parse(defValTag, val)
@@ -120,10 +120,10 @@ func ParseDefaultVal(v interface{}) error {
 
 func parse(tag string, val reflect.Value) error {
 	for i := 0; i < val.NumField(); i++ {
-		filed := val.Field(i)
+		field := val.Field(i)
 
-		if filed.Kind() == reflect.Struct {
-			if err := parse(tag, filed); err != nil {
+		if field.Kind() == reflect.Struct {
+			if err := parse(tag, field); err != nil {
 				return err
 			}
 		}
@@ -133,54 +133,54 @@ func parse(tag string, val reflect.Value) error {
 			continue
 		}
 
-		typ := filed.Type().String()
+		typ := field.Type().String()
 		switch typ {
 		case "int8", "int16", "int", "int32", "int64":
 			v, err := strconv.ParseInt(defVal, 10, 64)
 			if err != nil {
 				return errInvalidType(typ)
 			}
-			if filed.CanSet() {
-				filed.SetInt(v)
+			if field.CanSet() {
+				field.SetInt(v)
 			}
 		case "uint8", "uint16", "uint", "uint32", "uint64":
 			v, err := strconv.ParseUint(defVal, 10, 64)
 			if err != nil {
 				return errInvalidType(typ)
 			}
-			if filed.CanSet() {
-				filed.SetUint(v)
+			if field.CanSet() {
+				field.SetUint(v)
 			}
 		case "float32", "float64":
 			v, err := strconv.ParseFloat(defVal, 10)
 			if err != nil {
 				return errInvalidType(typ)
 			}
-			if filed.CanSet() {
-				filed.SetFloat(v)
+			if field.CanSet() {
+				field.SetFloat(v)
 			}
 		case "bool":
 			v, err := strconv.ParseBool(defVal)
 			if err != nil {
 				return errInvalidType(typ)
 			}
-			if filed.CanSet() {
-				filed.SetBool(v)
+			if field.CanSet() {
+				field.SetBool(v)
 			}
 		case "string":
-			if filed.CanSet() {
-				filed.SetString(defVal)
+			if field.CanSet() {
+				field.SetString(defVal)
 			}
 		case "time.Duration":
 			v, err := time.ParseDuration(defVal)
 			if err != nil {
 				return errInvalidType(typ)
 			}
-			if filed.CanSet() {
-				filed.SetInt(v.Nanoseconds())
+			if field.CanSet() {
+				field.SetInt(v.Nanoseconds())
 			}
 		case "[]int8", "[]int16", "[]int", "[]int32", "[]int64":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
 			sliceVal := strings.Split(defVal, ",")
@@ -208,9 +208,9 @@ func parse(tag string, val reflect.Value) error {
 			default:
 				rv = reflect.ValueOf(setVal)
 			}
-			filed.Set(rv)
+			field.Set(rv)
 		case "[]uint8", "[]uint16", "[]uint", "[]uint32", "[]uint64":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
 			sliceVal := strings.Split(defVal, ",")
@@ -238,9 +238,9 @@ func parse(tag string, val reflect.Value) error {
 			default:
 				rv = reflect.ValueOf(setVal)
 			}
-			filed.Set(rv)
+			field.Set(rv)
 		case "[]float32", "[]float64":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
 
@@ -258,12 +258,12 @@ func parse(tag string, val reflect.Value) error {
 			}
 			switch typ {
 			case "[]float32":
-				filed.Set(reflect.ValueOf(setVal.Float32()))
+				field.Set(reflect.ValueOf(setVal.Float32()))
 			default:
-				filed.Set(reflect.ValueOf(setVal))
+				field.Set(reflect.ValueOf(setVal))
 			}
 		case "[]bool":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
 			sliceVal := strings.Split(defVal, ",")
@@ -278,9 +278,9 @@ func parse(tag string, val reflect.Value) error {
 				}
 				setVal = append(setVal, b)
 			}
-			filed.Set(reflect.ValueOf(setVal))
+			field.Set(reflect.ValueOf(setVal))
 		case "[]string":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
 			sliceVal := strings.Split(defVal, ",")
@@ -292,10 +292,10 @@ func parse(tag string, val reflect.Value) error {
 				setVal = append(setVal, v)
 			}
 
-			filed.Set(reflect.ValueOf(setVal))
+			field.Set(reflect.ValueOf(setVal))
 
 		case "map[string]string":
-			if !filed.CanSet() {
+			if !field.CanSet() {
 				continue
 			}
 			sliceStr := strings.Split(defVal, ",")
@@ -307,7 +307,7 @@ func parse(tag string, val reflect.Value) error {
 				}
 				setVal[vs[0]] = vs[1]
 			}
-			filed.Set(reflect.ValueOf(setVal))
+			field.Set(reflect.ValueOf(setVal))
 		}
 	}
 

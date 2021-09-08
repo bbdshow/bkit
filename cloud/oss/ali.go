@@ -36,7 +36,7 @@ type AliOSS struct {
 	sessionName string
 }
 
-// roleArn, sessionName  aliCloud sts 服务
+// roleArn, sessionName  aliCloud sts service
 func NewAliOSS(cfg AliOSSConfig) (*AliOSS, error) {
 	oss := &AliOSS{
 		domain:    cfg.Domain,

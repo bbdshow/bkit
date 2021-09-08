@@ -2,7 +2,7 @@ package mongo
 
 var Indexes []Index
 
-// 将要创建索引占存
+// CreateIndex add indexes to Indexes, waiting create
 func CreateIndex(indexes []Index) {
 	Indexes = append(Indexes, indexes...)
 }

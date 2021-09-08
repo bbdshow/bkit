@@ -41,7 +41,7 @@ func validateHeader(header string) (clientIP string, valid bool) {
 	return
 }
 
-// 优选获取 X-Forwarded-For, X-Real-Ip
+// ClientIP Get X-Forwarded-For, X-Real-Ip
 func ClientIP(c *gin.Context) string {
 	remoteIPHeaders := []string{"X-Forwarded-For", "X-Real-Ip"}
 	for _, headerName := range remoteIPHeaders {
@@ -59,12 +59,12 @@ func ClientIP(c *gin.Context) string {
 
 func ShouldBind(c *gin.Context, obj interface{}) error {
 	if err := c.ShouldBind(obj); err != nil {
-		logs.Qezap.Warn("参数异常", zap.Any("请求参数", obj), zap.Any("异常原因", err), logs.Qezap.FieldTraceID(c.Request.Context()))
+		logs.Qezap.Warn("ParamException", zap.Any("RequestParam", obj), zap.Any("Exception", err), logs.Qezap.FieldTraceID(c.Request.Context()))
 		if !gin.IsDebugging() {
-			// 隐藏具体参数信息
+			// hide specific param info
 			return errc.ErrParamInvalid
 		}
-		return err
+		return errc.ErrParamInvalid.MultiErr(err)
 	}
 	return nil
 }

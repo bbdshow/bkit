@@ -11,7 +11,7 @@ import (
 )
 
 type DataBaseInterface interface {
-	// 扩展的快捷方法
+	// extend quick function
 	Exists(ctx context.Context, collection string, filter interface{}) (bool, error)
 	FindOne(ctx context.Context, collection string, filter interface{}, doc interface{}, opt ...*options.FindOneOptions) (bool, error)
 	Find(ctx context.Context, collection string, filter bson.M, docs interface{}, opt ...*options.FindOptions) error

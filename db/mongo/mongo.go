@@ -119,11 +119,11 @@ func (db *Database) ListCollectionNames(ctx context.Context, prefix ...string) (
 
 type Index struct {
 	Collection         string
-	Name               string // 指定索引名称
+	Name               string // index name
 	Keys               bson.D
-	Unique             bool  // 唯一索引
-	Background         bool  // 非阻塞创建索引
-	ExpireAfterSeconds int32 // 多少秒后过期
+	Unique             bool  // unique index
+	Background         bool  // background create index
+	ExpireAfterSeconds int32 // ttl index
 }
 
 func (i Index) Validate() error {

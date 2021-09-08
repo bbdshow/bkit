@@ -8,14 +8,14 @@ import (
 type LoginReq struct {
 	// 4-24
 	Username string `json:"username" binding:"required,gte=4,lte=24"`
-	// 必需MD5
+	// must md5
 	Password string `json:"password" binding:"required,len=32"`
 }
 
 const dateTime = "2006-01-02 15:04:05"
 
 type TimeStringReq struct {
-	// 格式 2006-01-02 15:04:05
+	// format 2006-01-02 15:04:05
 	StartTime string `json:"startTime" form:"startTime"`
 	EndTime   string `json:"endTime" form:"endTime"`
 }
@@ -61,7 +61,7 @@ func (req TimeStringReq) FieldMgoBson() (map[string]interface{}, bool) {
 }
 
 type TimestampReq struct {
-	// Unix 时间戳 秒级别
+	// Unix timestamp Sec
 	StartTimestamp int64 `json:"startTimestamp" form:"startTimestamp,default=0" binding:"omitempty,min=0"`
 	EndTimestamp   int64 `json:"endTimestamp" form:"endTimestamp,default=0" binding:"omitempty,gtefield=StartTimestamp"`
 }
@@ -120,7 +120,6 @@ type IdOmitReq struct {
 }
 
 type UidReq struct {
-	// 用户ID
 	Uid int64 `json:"uid" form:"uid" binding:"required,min=1"`
 }
 

@@ -15,7 +15,12 @@ import (
 )
 
 func testHttpServer() {
-	sign := NewAPISign(defSignValidTime, HmacSha256)
+	cfg := Config{
+		SignValidDuration: 10 * time.Second,
+		Method:            HmacSha1,
+		PathSign:          true,
+	}
+	sign := NewAPISign(&cfg)
 	sign.SetGetSecretKey(func(accessKey string) (string, error) {
 		vals := map[string]string{
 			"abc": "abc_secretKey",
@@ -59,12 +64,17 @@ func TestAPISign_Verify(t *testing.T) {
 	time.Sleep(time.Second)
 	path := "http://localhost:8080/sign?2=2&1=1"
 	pointVal := float32(40.5)
+	type Add struct {
+		Address string `json:"address"`
+		No      int
+	}
 	b := struct {
 		Name    string
 		Age     int
 		Balance float64
 		Point   *float32
-	}{Name: "nice", Age: 5, Balance: 102.22222, Point: &pointVal}
+		Adds    []Add
+	}{Name: "nice", Age: 5, Balance: 102.22222, Point: &pointVal, Adds: []Add{{Address: "XX", No: 88}, {Address: "AA", No: 77}}}
 	byts, err := json.Marshal(b)
 	if err != nil {
 		t.Fatal(err)
@@ -122,5 +132,44 @@ func jsonSign(path string, timestamp string, body io.Reader) string {
 
 	str = path + "?" + str + timestamp
 	fmt.Println(str)
-	return HmacSha256ToBase64(str, "abc_secretKey")
+	return HmacSha1ToBase64(str, "abc_secretKey")
+}
+
+type testObj struct {
+	Z        string    `json:"z"`
+	A        int       `json:"a"`
+	Bools    []bool    `json:"bools"`
+	Strs     []string  `json:"strs"`
+	F        float64   `json:"f"`
+	Float64s []float64 `json:"float64s"`
+	Arr      []k       `json:"arr"`
+	K        k         `json:"k"`
+}
+type k struct {
+	K  int `json:"k"`
+	K2 int `json:"k2"`
+}
+
+func TestSortToString(t *testing.T) {
+	obj := testObj{
+		Z:        "z",
+		A:        0,
+		Bools:    []bool{true, false},
+		Strs:     []string{"1", "2"},
+		F:        90.8712,
+		Float64s: []float64{0.1, 0.2},
+		Arr:      []k{{K: 1, K2: 2}, {K: 3, K2: 4}, {K: 1, K2: 2}},
+		K: k{
+			K2: 222,
+		},
+	}
+	str, _ := json.Marshal(obj)
+	body := RequestBodyMap{}
+
+	if err := json.Unmarshal(str, &body); err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(string(str))
+
+	fmt.Println(body.SortToString("&"))
 }

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/bbdshow/gocache"
+	"github.com/bbdshow/bkit/caches"
 	"github.com/shopspring/decimal"
 	"io/ioutil"
 	"net/http"
@@ -16,44 +16,55 @@ import (
 )
 
 /*
-1. 签名头X-Signature=accessKey:signStr:timestamp (:分割不同元素)
-2. 签名方式： Method(rawStr+timestamp, secretKey) 最终signStr是Base64编码
-3. rawStr 解释 如果是 GET请求，例子: http://example.com/hello?n=1&a=2  => /hello?a=2&n=11626167650 参数要进行字符正序
-4. 非GET请求，对于Content-Type: application/json {"n":"m","a":2} 也进行字符正序 => {"a":2,"n":"m"} 最终 a=2&n=m
-5. rawStr+timestamp = /hello?a=2&n=m1626167650 时间戳(秒)  最终在签名,携带时间戳，是为了验证签名时间有效性 当前有效性 -+10s
-6. 最终形式都是  path?/k=v&k1=v1 + timestamp
+1. Sign Header Key = X-Signature  Value = accessKey:signStr:timestamp (: split elem)
+2. Sign Method： Method(rawStr+timestamp, secretKey) signStr(rawStr+timestamp) => encoding Base64 | Hex(default)
+3. rawStr eg: GET http://example.com/hello?n=1&a=2  => a=2&n=11626167650 param key string attaches the methods
+4. other request http method，for Content-Type: application/json {"n":"m","a":2} param key string attaches the methods => {"a":2,"n":"m"} => a=2&n=m
+5. rawStr+timestamp => a=2&n=m1626167650 timestamp(sec)  verify sign time valid（default 10s）
+6. if Config.PathSign = true URL.Path also need to sign, rawStr => /path?k=v&k1=v1 , default Config.PathSign = false
 */
-// APISign 接口签名
+// APISign API Sign
 type APISign struct {
-	cache        gocache.Cache
+	cfg *Config
+
+	cache        caches.Cacher
 	getSecretKey func(accessKey string) (string, error)
-	method       Method
 }
 type Method string
 
 const (
-	HmacSha256 Method = "HMAC-SHA256"
-	HmacSha1   Method = "HMAC-SHA1"
+	HmacSha256    Method = "HMAC-SHA256-BASE64"
+	HmacSha1      Method = "HMAC-SHA1-BASE64"
+	HmacSha1Hex   Method = "HMAC-SHA1-HEX"
+	HmacSha256Hex Method = "HMAC-SHA256-HEX"
 )
 
 var (
-	defSignValidTime = 5 * time.Second
+	defSignValidDuration = 10 * time.Second
 )
 
+type Config struct {
+	SignValidDuration time.Duration `defval:"10s"`
+	Method            `defval:"HMAC-SHA256-HEX"`
+	PathSign          bool `defval:"false"`
+}
+
 // signValidDuration sign valid time interval
-func NewAPISign(signValidDuration time.Duration, method Method) *APISign {
-	if signValidDuration > defSignValidTime {
-		defSignValidTime = signValidDuration
-	}
+func NewAPISign(cfg *Config) *APISign {
+
 	sign := &APISign{
-		method:       method,
-		cache:        gocache.NewRWMapCache(),
+		cfg:          cfg,
+		cache:        caches.NewLRUMemory(1000),
 		getSecretKey: nil,
 	}
+	if sign.cfg.SignValidDuration <= 0 {
+		sign.cfg.SignValidDuration = defSignValidDuration
+	}
+
 	return sign
 }
 
-// Verify 验证签名
+// Verify sign verify
 func (sign *APISign) Verify(req *http.Request, header string) error {
 	val := req.Header.Get(header)
 	if val == "" {
@@ -71,7 +82,7 @@ func (sign *APISign) Verify(req *http.Request, header string) error {
 	rawStr := ""
 	switch strings.ToUpper(req.Method) {
 	default:
-		// 没有签名
+		// not support http method
 		return nil
 	case http.MethodPost, http.MethodPut, http.MethodDelete:
 		ct := filterFlags(req.Header.Get("Content-Type"))
@@ -92,33 +103,34 @@ func (sign *APISign) Verify(req *http.Request, header string) error {
 			if err != nil {
 				return fmt.Errorf("SortToString %v", err)
 			}
-			rawStr = fmt.Sprintf("%s?%s", req.URL.Path, bodyStr)
-
+			if sign.cfg.PathSign {
+				rawStr = req.URL.Path + "?" + bodyStr
+			} else {
+				rawStr = bodyStr
+			}
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(byt))
 		case "multipart/form-data":
-			rawStr, err = SortParamForm(req, true)
-			rawStr = fmt.Sprintf("%s?%s", req.URL.Path, rawStr)
+			rawStr, err = SortParamForm(req, sign.cfg.PathSign)
 			if err != nil {
 				return err
 			}
 		}
 
 	case http.MethodGet:
-		rawStr, err = SortParamForm(req, true)
+		rawStr, err = SortParamForm(req, sign.cfg.PathSign)
 		if err != nil {
 			return err
 		}
 	}
 	rawStr = rawStr + timestamp
-	signStrDist := HmacHash(sign.method, rawStr, secretKey)
-
+	signStrDist := HmacHash(sign.cfg.Method, rawStr, secretKey)
 	if signStrDist != signStr {
 		return fmt.Errorf("sign method invalid rawStr:%s", rawStr)
 	}
 	return nil
 }
 
-// decodeHeaderVal 签名头类容格式 accessKey:signStr(HmacSha1ToBase64(rawStr+timestamp, secretKey)):timestamp
+// decodeHeaderVal header value decode to  accessKey:signStr:timestamp
 func (sign *APISign) decodeHeaderVal(headerVal string) (accessKey, signStr, timestamp string, err error) {
 	strs := strings.Split(headerVal, ":")
 	if len(strs) != 3 {
@@ -131,32 +143,43 @@ func (sign *APISign) decodeHeaderVal(headerVal string) (accessKey, signStr, time
 	if err != nil {
 		return "", "", "", fmt.Errorf("sign timestamp invalid")
 	}
-	t := time.Unix(i, 0)
-	if t.Before(time.Now().Add(-defSignValidTime)) || t.After(time.Now().Add(defSignValidTime)) {
-		return "", "", "", fmt.Errorf("sign timestamp invalid")
+
+	if err := sign.signValidTime(time.Unix(i, 0)); err != nil {
+		return "", "", "", err
 	}
+
 	return accessKey, signStr, timestamp, nil
 }
 
-// SetGetSecretKey 设置SecretKey 获取方法
+func (sign *APISign) signValidTime(t time.Time) error {
+	if t.Before(time.Now().Add(-sign.cfg.SignValidDuration)) || t.After(time.Now().Add(sign.cfg.SignValidDuration)) {
+		return fmt.Errorf("sign timestamp invalid")
+	}
+	return nil
+}
+
+// SetGetSecretKey setting SecretKey get function
 func (sign *APISign) SetGetSecretKey(f func(accessKey string) (string, error)) {
 	sign.getSecretKey = f
 }
 
 // secretKey
 func (sign *APISign) secretKey(accessKey string) (string, error) {
-	v, exists := sign.cache.Get(accessKey)
-	if !exists {
-
-		if sign.getSecretKey == nil {
-			return "", fmt.Errorf("sign getSecretKey function not init")
+	var key string
+	v, err := sign.cache.Get(accessKey)
+	if err != nil {
+		if caches.IsNotFoundErr(err) {
+			if sign.getSecretKey == nil {
+				return "", fmt.Errorf("sign getSecretKey function not init")
+			}
+			key, err = sign.getSecretKey(accessKey)
+			if err != nil {
+				return "", err
+			}
+			_ = sign.cache.SetWithTTL(accessKey, key, 10*time.Minute)
+			return key, nil
 		}
-		key, err := sign.getSecretKey(accessKey)
-		if err != nil {
-			return "", err
-		}
-		_ = sign.cache.SetWithExpire(accessKey, key, 600)
-		return key, nil
+		return "", err
 	}
 	if vv, ok := v.(string); ok {
 		return vv, nil
@@ -164,9 +187,9 @@ func (sign *APISign) secretKey(accessKey string) (string, error) {
 	return "", fmt.Errorf("accessKey invalid")
 }
 
-// SortParamForm URL 和 form-data 参数
+// SortParamForm URL and form-data param
 func SortParamForm(req *http.Request, path bool) (string, error) {
-	resource := req.URL.Path
+	resource := ""
 	switch filterFlags(req.Header.Get("Content-Type")) {
 	case "multipart/form-data":
 		err := req.ParseMultipartForm(10 << 20)
@@ -192,7 +215,7 @@ func SortParamForm(req *http.Request, path bool) (string, error) {
 			query = append(query, url.QueryEscape(k)+"="+url.QueryEscape(req.Form.Get(k)))
 		}
 		if path {
-			resource = resource + "?" + strings.Join(query, "&")
+			resource = req.URL.Path + "?" + strings.Join(query, "&")
 		} else {
 			resource = strings.Join(query, "&")
 		}
@@ -204,8 +227,12 @@ func HmacHash(method Method, rawStr, secretKey string) string {
 	dist := ""
 	switch method {
 	case HmacSha1:
-		dist = HmacSha1ToHex(rawStr, secretKey)
+		dist = HmacSha1ToBase64(rawStr, secretKey)
 	case HmacSha256:
+		dist = HmacSha256ToBase64(rawStr, secretKey)
+	case HmacSha1Hex:
+		dist = HmacSha1ToHex(rawStr, secretKey)
+	case HmacSha256Hex:
 		dist = HmacSha256ToHex(rawStr, secretKey)
 	default:
 		dist = HmacSha256ToHex(rawStr, secretKey)
@@ -237,18 +264,17 @@ func (r RequestBodyMap) SortToString(separator string) (string, error) {
 	}
 
 	sort.Sort(kvs)
-
 	var s = make([]string, 0, len(kvs))
 	for _, v := range kvs {
 		switch v.Value.(type) {
 		case float64:
-			s = append(s, fmt.Sprintf("%s=%v", v.Key, decimal.NewFromFloat(v.Value.(float64)).String()))
+			s = append(s, fmt.Sprintf("%s=%s", v.Key, decimal.NewFromFloat(v.Value.(float64)).String()))
 		case float32:
-			s = append(s, fmt.Sprintf("%s=%v", v.Key, decimal.NewFromFloat(float64(v.Value.(float32))).String()))
+			s = append(s, fmt.Sprintf("%s=%s", v.Key, decimal.NewFromFloat(float64(v.Value.(float32))).String()))
 		case *float64:
-			s = append(s, fmt.Sprintf("%s=%v", v.Key, decimal.NewFromFloat(*v.Value.(*float64)).String()))
+			s = append(s, fmt.Sprintf("%s=%s", v.Key, decimal.NewFromFloat(*v.Value.(*float64)).String()))
 		case *float32:
-			s = append(s, fmt.Sprintf("%s=%v", v.Key, decimal.NewFromFloat(float64(*v.Value.(*float32))).String()))
+			s = append(s, fmt.Sprintf("%s=%s", v.Key, decimal.NewFromFloat(float64(*v.Value.(*float32))).String()))
 		case string:
 			s = append(s, fmt.Sprintf("%s=%s", v.Key, v.Value))
 		case *string:

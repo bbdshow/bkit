@@ -8,40 +8,40 @@ import (
 )
 
 type HttpServer struct {
-	c       *Config
+	config  *Config
 	handler http.Handler
 	httpSrv *http.Server
 }
 
 func NewHttpServer(handler http.Handler) *HttpServer {
-	s := &HttpServer{
+	srv := &HttpServer{
 		handler: handler,
 	}
-	return s
+	return srv
 }
 
-// Run 监听端口
-func (s *HttpServer) Run(opts ...Option) error {
-	s.c = new(Config).Init().WithOptions(opts...)
+// Run
+func (srv *HttpServer) Run(opts ...Option) error {
+	srv.config = new(Config).Init().WithOptions(opts...)
 
-	s.httpSrv = &http.Server{
-		Addr:         s.c.ListenAddr,
-		Handler:      s.handler,
-		ReadTimeout:  s.c.ReadTimeout,
-		WriteTimeout: s.c.WriteTimeout,
+	srv.httpSrv = &http.Server{
+		Addr:         srv.config.ListenAddr,
+		Handler:      srv.handler,
+		ReadTimeout:  srv.config.ReadTimeout,
+		WriteTimeout: srv.config.WriteTimeout,
 	}
-	log.Printf("http server %s\n", s.c)
-	s.httpSrv.RegisterOnShutdown(func() {
+	log.Printf("http server %s\n", srv.config)
+	srv.httpSrv.RegisterOnShutdown(func() {
 		log.Printf("current goroutine number: %d", runtime.NumGoroutine())
 	})
-	return s.httpSrv.ListenAndServe()
+	return srv.httpSrv.ListenAndServe()
 }
 
-// Shutdown 优雅关闭
-func (s *HttpServer) Shutdown(ctx context.Context) error {
+// Shutdown
+func (srv *HttpServer) Shutdown(ctx context.Context) error {
 	var err error
-	if s.httpSrv != nil {
-		err = s.httpSrv.Shutdown(ctx)
+	if srv.httpSrv != nil {
+		err = srv.httpSrv.Shutdown(ctx)
 	}
 	log.Printf("http server shutdown %v\n", err)
 	return err

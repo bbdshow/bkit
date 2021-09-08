@@ -11,7 +11,7 @@ const (
 	LEN     = 6
 )
 
-// id转code
+// id to code
 func Encode(uid uint64) string {
 	id := uid
 	mod := uint64(0)
@@ -31,23 +31,23 @@ func Encode(uid uint64) string {
 	return res
 }
 
-// code转id
+// code to id
 func Decode(code string) uint64 {
 	res := uint64(0)
 	lenCode := len(code)
-	baseArr := []byte(BASE)       // 字符串进制转换为byte数组
-	baseRev := make(map[byte]int) // 进制数据键值转换为map
+	baseArr := []byte(BASE)       // string decimal to byte array
+	baseRev := make(map[byte]int) // decimal data key to map
 	for k, v := range baseArr {
 		baseRev[v] = k
 	}
-	// 查找补位字符的位置
+	// find cover char addr
 	isPad := strings.Index(code, PAD)
 	if isPad != -1 {
 		lenCode = isPad
 	}
 	r := 0
 	for i := 0; i < lenCode; i++ {
-		// 补充字符直接跳过
+		// if cover char , continue
 		if string(code[i]) == PAD {
 			continue
 		}

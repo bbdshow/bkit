@@ -16,7 +16,7 @@ type Config struct {
 	Conns []Conn
 }
 
-// Groups Mongodb 群组实例
+// Groups Mongodb instance groups
 type Groups struct {
 	Config Config
 
@@ -24,7 +24,7 @@ type Groups struct {
 	instances map[string]*Database
 }
 
-// NewCluster 简单的多实例管理
+// NewGroups  mongo instance groups
 func NewGroups(cfg Config) (*Groups, error) {
 	g := &Groups{
 		Config:    cfg,
@@ -45,7 +45,7 @@ func NewGroups(cfg Config) (*Groups, error) {
 	return g, nil
 }
 
-// GetInstance 通过库名 获取实例
+// GetInstance get instance by database
 func (g *Groups) GetInstance(database string) (*Database, error) {
 	g.lock.RLock()
 	defer g.lock.RUnlock()

@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// BeautifyToJSON 常用于测试环境打印结构体数据
+// BeautifyToJSON
 func BeautifyToJSON(v interface{}) string {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {

@@ -18,7 +18,6 @@ import (
 
 var AuthorizationHeader = "X-Authorization"
 var SignatureHeader = "X-Signature"
-var SignValidDuration = 5 * time.Second
 
 func ContextWithTraceId() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -27,10 +26,9 @@ func ContextWithTraceId() gin.HandlerFunc {
 	}
 }
 
-// DumpBodyLogger Dump 请求和返回Body便于排查问题
+// DumpBodyLogger Dump  req | resp body
 func DumpBodyLogger(skipPaths ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 记录请求
 		uri := c.Request.URL.RequestURI()
 		path := c.FullPath()
 		for _, v := range skipPaths {
@@ -52,7 +50,7 @@ func DumpBodyLogger(skipPaths ...string) gin.HandlerFunc {
 				c.Abort()
 				return
 			}
-			// 这里已经读取第一次，就关掉
+			// read first time, so closed body
 			_ = c.Request.Body.Close()
 			body := bytes.NewBuffer(b)
 
@@ -75,7 +73,7 @@ func DumpBodyLogger(skipPaths ...string) gin.HandlerFunc {
 			logs.Qezap.ConditionOne(method), logs.Qezap.ConditionTwo(path), logs.Qezap.ConditionThree(ip),
 			logs.Qezap.FieldTraceID(c.Request.Context()))
 
-		// 为了Dump返回值
+		// dump body
 		w := &respWriter{body: bytes.NewBuffer([]byte{}), ResponseWriter: c.Writer}
 		c.Writer = w
 
@@ -91,7 +89,7 @@ func DumpBodyLogger(skipPaths ...string) gin.HandlerFunc {
 	}
 }
 
-// ReqLogger GIN 请求日志拦截到日志系统中
+// ReqLogger GIN handle request logging to qelog
 func ReqLogger(skipPaths ...string) gin.HandlerFunc {
 	var skip map[string]struct{}
 
@@ -153,7 +151,7 @@ func ReqLogger(skipPaths ...string) gin.HandlerFunc {
 	}
 }
 
-// RecoveryLogger GIN Recovery错误日志
+// RecoveryLogger GIN Recovery logging to qelog
 func RecoveryLogger() gin.HandlerFunc {
 	if logs.Qezap != nil {
 		return gin.RecoveryWithWriter(logs.Qezap.NewWriter(zap.ErrorLevel, "GIN-ERROR"))
@@ -161,7 +159,7 @@ func RecoveryLogger() gin.HandlerFunc {
 	return gin.Recovery()
 }
 
-// JWTAuthVerify JWT权限验证 signingKey 自定义的 加密Key, 如果没有就使用全局默认的
+// JWTAuthVerify JWT auth verify signingKey custom signing key
 func JWTAuthVerify(enable bool, signingKey ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !enable {
@@ -170,7 +168,7 @@ func JWTAuthVerify(enable bool, signingKey ...string) gin.HandlerFunc {
 		}
 		token := c.GetHeader(AuthorizationHeader)
 		if token == "" {
-			logs.Qezap.Warn("JWT权限异常", zap.String("Authorization", "头未传入"), logs.Qezap.FieldTraceID(c.Request.Context()))
+			logs.Qezap.Warn("JWTAuthException", zap.String("Authorization", "request header required"), logs.Qezap.FieldTraceID(c.Request.Context()))
 			RespErr(c, errc.ErrAuthRequired, http.StatusUnauthorized)
 			c.Abort()
 			return
@@ -178,7 +176,7 @@ func JWTAuthVerify(enable bool, signingKey ...string) gin.HandlerFunc {
 
 		ok, err := jwt.VerifyJWTToken(token, signingKey...)
 		if err != nil {
-			logs.Qezap.Warn("JWT权限异常", zap.String("JWT", err.Error()), logs.Qezap.FieldTraceID(c.Request.Context()))
+			logs.Qezap.Warn("JWTAuthException", zap.String("JWT", err.Error()), logs.Qezap.FieldTraceID(c.Request.Context()))
 			if strings.Contains(err.Error(), "expired") {
 				RespErr(c, errc.ErrAuthExpired, http.StatusUnauthorized)
 			} else {
@@ -188,14 +186,14 @@ func JWTAuthVerify(enable bool, signingKey ...string) gin.HandlerFunc {
 			return
 		}
 		if !ok {
-			logs.Qezap.Warn("JWT权限异常", zap.String("JWT", "验证无效"), logs.Qezap.FieldTraceID(c.Request.Context()))
+			logs.Qezap.Warn("JWTAuthException", zap.String("JWT", "verify invalid"), logs.Qezap.FieldTraceID(c.Request.Context()))
 			RespErr(c, errc.ErrAuthInvalid, http.StatusUnauthorized)
 			c.Abort()
 			return
 		}
 
 		if err := SetJWTDataToContext(c, token, signingKey...); err != nil {
-			logs.Qezap.Warn("JWT权限异常", zap.String("设置JWT数据", err.Error()), logs.Qezap.FieldTraceID(c.Request.Context()))
+			logs.Qezap.Warn("JWTAuthException", zap.String("SettingJWTData", err.Error()), logs.Qezap.FieldTraceID(c.Request.Context()))
 			RespErr(c, errc.ErrAuthInternalErr, http.StatusUnauthorized)
 			c.Abort()
 			return
@@ -204,18 +202,24 @@ func JWTAuthVerify(enable bool, signingKey ...string) gin.HandlerFunc {
 	}
 }
 
-// ApiSignVerify API hmacSha1 接口签名 必需设置获取密钥的方法
-func ApiSignVerify(enable bool, method sign.Method, supportMethods []string, getSecretKey func(accessKey string) (string, error)) gin.HandlerFunc {
-	apiSign := sign.NewAPISign(SignValidDuration, method)
+type SignConfig struct {
+	Enable bool `defval:"false"`
+	sign.Config
+	SupportMethods []string `defval:"GET,POST,PUT,DELETE"`
+}
+
+// ApiSignVerify API 接口签名 必需设置获取密钥的方法
+func ApiSignVerify(cfg *SignConfig, getSecretKey func(accessKey string) (string, error)) gin.HandlerFunc {
+	apiSign := sign.NewAPISign(&cfg.Config)
 	apiSign.SetGetSecretKey(getSecretKey)
 
 	return func(c *gin.Context) {
-		if !enable {
+		if !cfg.Enable {
 			c.Next()
 			return
 		}
 		isSupport := false
-		for _, v := range supportMethods {
+		for _, v := range cfg.SupportMethods {
 			if c.Request.Method == strings.ToUpper(v) {
 				isSupport = true
 				break

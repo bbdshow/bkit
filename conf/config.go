@@ -27,7 +27,7 @@ func FlagConfigPath(path ...string) string {
 	return configPath
 }
 
-// PrintJSON 变成JSON字符串 敏感配置请用 null:"" 屏蔽
+// PrintJSON  print JSON string,  null tag, will hide
 func PrintJSON(config interface{}) (string, error) {
 	if err := defval.InitialNullVal(config); err != nil {
 		return "", err
@@ -39,7 +39,7 @@ func PrintJSON(config interface{}) (string, error) {
 	return string(byts), nil
 }
 
-// ReadConfig 读取配置文件
+// ReadConfig read config filename
 func ReadConfig(filename string, config interface{}) error {
 	if err := UnmarshalDefaultVal(config); err != nil {
 		return err
@@ -61,18 +61,18 @@ func ReadConfig(filename string, config interface{}) error {
 }
 
 func filenameSplit(filename string) (dir, file, typ string) {
-	// 解析typ
+	// decode typ
 	dir, file = filepath.Split(filename)
 	typ = file[strings.LastIndex(file, ".")+1:]
 	return dir, file, typ
 }
 
-// UnmarshalDefaultVal 结构体 Tag 默认值
+// UnmarshalDefaultVal struct, 'defval' tag to default value
 func UnmarshalDefaultVal(config interface{}) error {
 	return defval.ParseDefaultVal(config)
 }
 
-// MarshalToFile 结构体生成文件，方便部署等
+// MarshalToFile struct to file
 func MarshalToFile(config interface{}, filename string) error {
 	kind := reflect.TypeOf(config).Kind().String()
 	if kind != "struct" && kind != "ptr" {

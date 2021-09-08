@@ -17,7 +17,7 @@ const (
 )
 
 func TestQiNiuOSS_Base64Put(t *testing.T) {
-	str, err := encode("/Users/hzq/Desktop/test.docx")
+	str, err := encode("/Users/Desktop/test.docx")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func TestQiNiuOSS_Base64Put(t *testing.T) {
 }
 
 func TestNewQiNiuOSS_Put(t *testing.T) {
-	buff, err := ioutil.ReadFile("/Users/hzq/Desktop/images/IMG_20170423_085501.jpg")
+	buff, err := ioutil.ReadFile("/Users/Desktop/images/IMG_20170423_085501.jpg")
 	if err != nil {
 		t.Fatal(err)
 	}

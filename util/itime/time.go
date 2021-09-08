@@ -5,8 +5,13 @@ import (
 	"time"
 )
 
+const (
+	DateTime = "2006-01-02 15:04:05"
+	Date     = "2006-01-02"
+)
+
 func DateString(t time.Time, layout ...string) string {
-	var f = "2006-01-02"
+	var f = Date
 	if len(layout) > 0 && layout[0] != "" {
 		f = layout[0]
 	}

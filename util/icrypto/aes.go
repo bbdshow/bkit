@@ -76,7 +76,7 @@ func UnPadding(origData []byte) ([]byte, error) {
 		return origData, nil
 	}
 	length := len(origData)
-	// 去掉最后一个字节 unPadding 次
+	// reduce last byte unPadding
 	unPadding := int(origData[length-1])
 	if len(origData) >= (length-unPadding) && (length-unPadding) >= 0 {
 		return origData[:(length - unPadding)], nil

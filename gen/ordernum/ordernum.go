@@ -19,8 +19,8 @@ func NewOrderId() OrderId {
 	return NewOrderIdWithTime(time.Now())
 }
 
-//生成24位订单号
-//前面17位代表时间精确到毫秒，中间3位代表进程id，最后4位代表序号
+//gen 24-bit order num
+//17-bit mean time precision ms ，3-bit mean process id，last 4-bit mean incr num
 func NewOrderIdWithTime(t time.Time) OrderId {
 	sec := t.Format("20060102150405")
 	mill := t.UnixNano()/1e6 - t.UnixNano()/1e9*1e3

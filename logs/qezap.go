@@ -6,17 +6,17 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// Qezap 支持远端的 Zap, 是Zap的超集
+// Qezap
 var Qezap *qezap.Logger
 
 func init() {
-	// 注册本地Log，不具有远程写入能力
+	// init local Log，not support remote write
 	Qezap = qezap.New(qezap.NewConfig(nil, ""), zap.DebugLevel)
 }
 
 type Config struct {
-	Addr     []string `defval:""`
-	Module   string   `defval:""`
+	Addr     []string `defval:"127.0.0.1:31082"`
+	Module   string   `defval:"example"`
 	Filename string   `defval:"./log/logger.log"`
 	Level    int      `defval:"-1"` // -1=debug 0=info ...
 }

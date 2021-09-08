@@ -26,14 +26,14 @@ func SetSigningMethod(method jwt.SigningMethod) {
 
 type CustomClaims struct {
 	SigningKey []byte
-	Data       string `json:"data"` // 任意字符串
+	Data       string `json:"data"` // any string, can be JSON marshal {"a":1}
 	jwt.StandardClaims
 }
 
-// 自定义携带数据结构
+// custom data string
 type CustomData string
 
-// NewCustomClaims 自定义请求权
+// NewCustomClaims custom request authorization
 func NewCustomClaims(data string, ttl time.Duration, signingKey ...string) *CustomClaims {
 	cc := &CustomClaims{
 		SigningKey: SigningKey,

@@ -5,7 +5,7 @@ import (
 	"runtime"
 )
 
-// -1--999 为系统公共错误
+// -1--999 system common error code
 const (
 	Failed  = -1
 	Success = 0
@@ -85,6 +85,10 @@ func (e Error) MultiMsg(msg string) Error {
 		e.Message += " " + msg
 	}
 	return e
+}
+
+func (e Error) CodeMsg() (int, string) {
+	return e.Code, e.Message
 }
 
 func (e Error) addStack(v ...string) Error {

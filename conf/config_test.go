@@ -13,7 +13,7 @@ type testConfig struct {
 		StreetNumber string
 	}
 	Cards []card
-	Key   string `null:""` // 敏感字符
+	Key   string `null:""` // sensitive char
 }
 type card struct {
 	Brand string

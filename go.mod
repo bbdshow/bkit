@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/BurntSushi/toml v0.3.1
-	github.com/bbdshow/gocache v0.3.0
 	github.com/bbdshow/qelog/qezap v1.0.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.7.2

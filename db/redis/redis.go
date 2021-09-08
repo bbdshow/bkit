@@ -13,9 +13,9 @@ type Client struct {
 type Options struct {
 	Username string `defval:"root"`
 	Password string `defval:"111111" null:""`
-	// 最大重试 -1 不重试 默认值 单实例 0 集群 8
+	// max retry,  not retry = -1,  default, single=0 cluster=8
 	MaxRetries int
-	// 超时
+	// timeout
 	DialTimeout  time.Duration `defval:"60s"`
 	ReadTimeout  time.Duration `defval:"300s"`
 	WriteTimeout time.Duration `defval:"300s"`
@@ -27,7 +27,7 @@ type Config struct {
 	Options
 }
 
-// NewRedisClient 简化了 GET SET DEL 操作
+// NewRedisClient simplify GET SET DEL operation
 func NewRedisClient(cfg Config) (*Client, error) {
 	cli := redis.NewClient(&redis.Options{
 		Addr:         cfg.Addr,

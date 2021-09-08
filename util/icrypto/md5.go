@@ -5,12 +5,12 @@ import (
 	"fmt"
 )
 
-// PasswordSlatMD5 密码MD5加盐
+// PasswordSlatMD5 md5(password+slat)
 func PasswordSlatMD5(password, slat string) string {
-	return Md5String(password, ":", slat)
+	return Md5String(password, slat)
 }
 
-// Md5String 字符串md5
+// Md5String md5(str...)
 func Md5String(s string, multi ...string) string {
 	for _, v := range multi {
 		s += v

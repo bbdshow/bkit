@@ -7,16 +7,16 @@ import (
 	"time"
 )
 
-// ShardCollection 分片集合名
+// ShardCollection sharding collection name
 type ShardCollection struct {
 	Prefix string
-	Sep    string // 分隔符
-	// 天范围
+	Sep    string // sep tag
+	// days span max 31
 	daySpan map[int]int
 }
 
-// prefix 集合名前缀
-// day>=31 | day<=0 则按月分片,  day = x 则每 x 天为一个分片区间
+// prefix collection name prefix
+// day>=31 | day<=0 month,  day = x, span = x
 func NewShardCollection(prefix string, day int) ShardCollection {
 	sc := ShardCollection{Prefix: prefix, daySpan: make(map[int]int), Sep: "_"}
 	sc.daySpan = sc.calcDaySpan(day)
@@ -83,7 +83,7 @@ func (sc ShardCollection) CollNameDate(collName string) (time.Time, error) {
 	return time.Date(y, m, 0, 0, 0, 0, 0, time.Local), nil
 }
 
-// SepTime 当前集合时间分区内下一个分隔时间
+// SepTime calc next sep time
 func (sc ShardCollection) SepTime(collName string) (t time.Time, err error) {
 	_, _, y, m, n, err := sc.DecodeCollName(collName)
 	if err != nil {
@@ -108,7 +108,7 @@ func (sc ShardCollection) SepTime(collName string) (t time.Time, err error) {
 	return t, nil
 }
 
-// CollNameByStartEnd 根据开始时间和结束时间，查询出所有生成的 name
+// CollNameByStartEnd find collection names by  bucket,start,end
 func (sc ShardCollection) CollNameByStartEnd(bucket string, start, end int64) []string {
 	startTime := time.Unix(start, 0)
 	endTime := time.Unix(end, 0)

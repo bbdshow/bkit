@@ -10,7 +10,7 @@ type Config struct {
 	Slaves          []Conn
 	MaxOpenConn     int  `defval:"50"`
 	MaxIdleConn     int  `defval:"200"`
-	ConnMaxLifetime uint `defval:"7200"` // sec 空闲连接最大生命周期
+	ConnMaxLifetime uint `defval:"7200"` // sec
 }
 
 type Conn struct {

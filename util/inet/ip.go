@@ -11,7 +11,7 @@ func GetLocalIPV4() (string, error) {
 		return "", nil
 	}
 	for _, addr := range addrs {
-		// 检查ip地址是否为回环地址
+		// check ip address is loop address
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
 				return ipnet.IP.String(), nil

@@ -8,22 +8,22 @@ import (
 
 var skipPaths = []string{"/health", "/admin", "/static", "/docs", "/favicon.ico"}
 
-// AddSkipPaths 添加的Path不会被日志记录
+// AddSkipPaths add skip Path, not write logger
 func AddSkipPaths(paths ...string) {
 	skipPaths = append(skipPaths, paths...)
 }
 
 const (
-	MRelease = 1 << iota // Gin release 模式
-	MSwagger             // 开启Swagger
+	MRelease = 1 << iota // Gin release Mode
+	MSwagger             // enable Swagger
 
-	// 中间件启用
-	MTraceId       // 请求context 加入TraceId
-	MReqLogger     //请求日志
-	MDumpBody      // Dump 请求参数&返回参数
-	MRecoverLogger // Recover 日志写入到日志中心
+	// middleware enable
+	MTraceId       // request context add TraceId
+	MReqLogger     // request logging
+	MDumpBody      // Dump req | resp body
+	MRecoverLogger // Recover logging write to qelog
 
-	MStd = MSwagger | MTraceId | MReqLogger | MDumpBody // 默认
+	MStd = MSwagger | MTraceId | MReqLogger | MDumpBody // default
 )
 
 func DefaultEngine(flags int) *gin.Engine {
@@ -40,7 +40,7 @@ func DefaultEngine(flags int) *gin.Engine {
 		engine.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 
-	// 中间件
+	// middleware
 	if flags&MTraceId != 0 {
 		engine.Use(ContextWithTraceId())
 	}

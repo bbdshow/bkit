@@ -16,7 +16,7 @@ type Server interface {
 	Shutdown(context.Context) error
 }
 
-// Run 运行服务进程，一般放到main.go 最后一行执行
+// Run
 func Run(server Server, deallocFunc func() error, opts ...Option) error {
 	if server == nil {
 		panic("server required")
@@ -32,7 +32,7 @@ func Run(server Server, deallocFunc func() error, opts ...Option) error {
 		return err
 	}
 
-	// 拦截退出信号
+	// handler exit signal
 	exitSignal := make(chan os.Signal, 1)
 	signal.Notify(exitSignal, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 	<-exitSignal

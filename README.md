@@ -1,2 +1,2 @@
 # bkit
-构建项目常用的基础组件
+develop project common kit library
