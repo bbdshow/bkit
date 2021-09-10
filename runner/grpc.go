@@ -2,6 +2,7 @@ package runner
 
 import (
 	"context"
+	"fmt"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -21,8 +22,8 @@ func NewGrpcServer() *GrpcServer {
 	return s
 }
 
-func (s *GrpcServer) Run(opts ...Option) error {
-	s.c = new(Config).Init().WithOptions(opts...)
+func (s *GrpcServer) Run(c *Config) error {
+	s.c = c
 	listen, err := net.Listen("tcp", s.c.ListenAddr)
 	if err != nil {
 		return err
@@ -39,9 +40,13 @@ func (s *GrpcServer) Run(opts ...Option) error {
 			}
 		}
 	}
-	if err := server.Serve(listen); err != nil {
-		return err
-	}
+
+	go func() {
+		if err := server.Serve(listen); err != nil {
+			panic(fmt.Sprintf("grpc serve listen %v", err))
+		}
+	}()
+
 	return nil
 }
 

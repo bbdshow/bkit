@@ -12,8 +12,12 @@ import (
 )
 
 type Server interface {
-	Run(...Option) error
+	Run(*Config) error
 	Shutdown(context.Context) error
+}
+
+func RunServer(server Server, opts ...Option) error {
+	return Run(server, func() error { return nil }, opts...)
 }
 
 // Run
@@ -22,27 +26,32 @@ func Run(server Server, deallocFunc func() error, opts ...Option) error {
 		panic("server required")
 	}
 
+	cfg := new(Config).Init().WithOptions(opts...)
+	ctx, cancel := context.WithCancel(cfg.Context)
+	defer cancel()
+
+	cfg.Context = ctx
+
 	errC := make(chan error, 1)
 	go func() {
-		errC <- errc.MultiError(server.Run(opts...))
+		errC <- errc.MultiError(server.Run(cfg))
 	}()
 
 	err := <-errC
 	if err != nil {
+		cancel()
 		return err
 	}
 
 	// handler exit signal
 	exitSignal := make(chan os.Signal, 1)
 	signal.Notify(exitSignal, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
-	<-exitSignal
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+	<-exitSignal
 	// server shutdown
 	err = errc.MultiError(server.Shutdown(ctx))
 
-	// 释放资源
+	// deallocFunc
 	if deallocFunc != nil {
 		err = errc.MultiError(deallocFunc())
 	}

@@ -20,11 +20,11 @@ type TaskServer struct {
 }
 
 func NewTaskServer() *TaskServer {
-	srv := &TaskServer{
+	s := &TaskServer{
 		wg:     &sync.WaitGroup{},
 		afters: make([]timeAfterFunc, 0),
 	}
-	return srv
+	return s
 }
 
 type timeAfterFunc struct {
@@ -32,11 +32,11 @@ type timeAfterFunc struct {
 	fn func(ctx context.Context)
 }
 
-func (srv *TaskServer) Run(opts ...Option) error {
-	srv.config = new(Config).Init().WithOptions(opts...)
-	srv.config.Context, srv.cancel = context.WithCancel(srv.config.Context)
+func (s *TaskServer) Run(c *Config) error {
+	s.config = c
+	s.config.Context, s.cancel = context.WithCancel(s.config.Context)
 
-	for _, v := range srv.afters {
+	for _, v := range s.afters {
 		// register and run time.AfterFunc
 		exec := func(ctx context.Context, wg *sync.WaitGroup, fn timeAfterFunc) {
 			for {
@@ -54,47 +54,47 @@ func (srv *TaskServer) Run(opts ...Option) error {
 				}
 			}
 		}
-		go exec(srv.config.Context, srv.wg, v)
+		go exec(s.config.Context, s.wg, v)
 	}
 
-	if srv.c != nil {
-		srv.c.Start()
+	if s.c != nil {
+		s.c.Start()
 	}
 
 	return nil
 }
 
-func (srv *TaskServer) Shutdown(ctx context.Context) error {
-	srv.cancel()
+func (s *TaskServer) Shutdown(ctx context.Context) error {
+	s.cancel()
 	// waiting exec over
-	if srv.c != nil {
-		<-srv.c.Stop().Done()
+	if s.c != nil {
+		<-s.c.Stop().Done()
 	}
-	srv.wg.Wait()
+	s.wg.Wait()
 
 	log.Printf("task server shutdown\n")
 	return nil
 }
 
-func (srv *TaskServer) AddTimeAfterFunc(d time.Duration, fn func(ctx context.Context)) error {
+func (s *TaskServer) AddTimeAfterFunc(d time.Duration, fn func(ctx context.Context)) error {
 	if d <= 0 {
 		return fmt.Errorf("d required")
 	}
 	if fn == nil {
 		return fmt.Errorf("func required")
 	}
-	srv.afters = append(srv.afters, timeAfterFunc{
+	s.afters = append(s.afters, timeAfterFunc{
 		d:  d,
 		fn: fn,
 	})
 	return nil
 }
 
-func (srv *TaskServer) AddCronFunc(spec string, fn func()) error {
-	if srv.c == nil {
-		srv.c = cron.New(cron.WithSeconds())
+func (s *TaskServer) AddCronFunc(spec string, fn func()) error {
+	if s.c == nil {
+		s.c = cron.New(cron.WithSeconds())
 	}
-	_, err := srv.c.AddFunc(spec, fn)
+	_, err := s.c.AddFunc(spec, fn)
 	if err != nil {
 		return err
 	}
