@@ -53,16 +53,16 @@ type Config struct {
 // signValidDuration sign valid time interval
 func NewAPISign(cfg *Config) *APISign {
 
-	sign := &APISign{
+	apiSign := &APISign{
 		cfg:          cfg,
 		cache:        caches.NewLRUMemory(1000),
 		getSecretKey: nil,
 	}
-	if sign.cfg.SignValidDuration <= 0 {
-		sign.cfg.SignValidDuration = defSignValidDuration
+	if apiSign.cfg.SignValidDuration > 0 && apiSign.cfg.SignValidDuration != defSignValidDuration {
+		defSignValidDuration = apiSign.cfg.SignValidDuration
 	}
 
-	return sign
+	return apiSign
 }
 
 // Verify sign verify
@@ -71,7 +71,7 @@ func (sign *APISign) Verify(req *http.Request, header string) error {
 	if val == "" {
 		return fmt.Errorf("sign header required")
 	}
-	accessKey, signStr, timestamp, err := sign.decodeHeaderVal(val)
+	accessKey, signStr, timestamp, err := DecodeHeaderVal(val)
 	if err != nil {
 		return err
 	}
@@ -131,8 +131,8 @@ func (sign *APISign) Verify(req *http.Request, header string) error {
 	return nil
 }
 
-// decodeHeaderVal header value decode to  accessKey:signStr:timestamp
-func (sign *APISign) decodeHeaderVal(headerVal string) (accessKey, signStr, timestamp string, err error) {
+// DecodeHeaderVal header value decode to  accessKey:signStr:timestamp
+func DecodeHeaderVal(headerVal string) (accessKey, signStr, timestamp string, err error) {
 	strs := strings.Split(headerVal, ":")
 	if len(strs) != 3 {
 		return "", "", "", fmt.Errorf("sign header invalid")
@@ -145,15 +145,15 @@ func (sign *APISign) decodeHeaderVal(headerVal string) (accessKey, signStr, time
 		return "", "", "", fmt.Errorf("sign timestamp invalid")
 	}
 
-	if err := sign.signValidTime(time.Unix(i, 0)); err != nil {
+	if err := SignedValidTime(time.Unix(i, 0)); err != nil {
 		return "", "", "", err
 	}
 
 	return accessKey, signStr, timestamp, nil
 }
 
-func (sign *APISign) signValidTime(t time.Time) error {
-	if t.Before(time.Now().Add(-sign.cfg.SignValidDuration)) || t.After(time.Now().Add(sign.cfg.SignValidDuration)) {
+func SignedValidTime(t time.Time) error {
+	if t.Before(time.Now().Add(-defSignValidDuration)) || t.After(time.Now().Add(defSignValidDuration)) {
 		return fmt.Errorf("sign timestamp invalid")
 	}
 	return nil
