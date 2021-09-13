@@ -3,6 +3,7 @@ module github.com/bbdshow/bkit
 go 1.15
 
 require (
+	git.wolot.io/golang/bkit v0.0.3 // indirect
 	github.com/BurntSushi/toml v0.3.1
 	github.com/bbdshow/qelog/qezap v1.0.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
