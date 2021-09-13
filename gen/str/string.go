@@ -35,9 +35,8 @@ func RandAlphaNumString(strLen int, lower ...bool) string {
 	str := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	bytes := []byte(str)
 	result := make([]byte, strLen)
-
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < strLen; i++ {
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		result[i] = bytes[r.Intn(len(bytes))]
 	}
 	if len(lower) > 0 && lower[0] {
