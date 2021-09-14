@@ -16,6 +16,7 @@ require (
 	github.com/shopspring/decimal v1.2.0
 	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
 	github.com/swaggo/gin-swagger v1.3.0
+	github.com/swaggo/swag v1.7.1 // indirect
 	go.uber.org/zap v1.17.0
 	google.golang.org/grpc v1.38.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b

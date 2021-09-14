@@ -1,3 +1,5 @@
+### v0.1.4
+1. swag upgrade v1.7.1
 ### v0.1.3
 1. open sign.DecodeHeaderVal sign.SignedValidTime
 ### v0.1.2
