@@ -1,3 +1,6 @@
+### v0.1.6
+1. add iemail hermes
+2. fixBug findSql
 ### v0.1.5
 1. swag upgrade v1.7.1
 

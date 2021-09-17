@@ -10,7 +10,7 @@ func TestRandNumCode(t *testing.T) {
 }
 
 func TestRandAlphaNumString(t *testing.T) {
-	fmt.Println(RandAlphaNumString(32, true))
+	fmt.Println(RandAlphaNumString(16, true))
 }
 
 func TestPasswordSlat(t *testing.T) {

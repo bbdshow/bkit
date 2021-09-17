@@ -28,13 +28,13 @@ func (req TimeStringReq) FieldSQLCond(field string) []string {
 	if req.StartTime != "" {
 		_, err := time.Parse(dateTime, req.StartTime)
 		if err == nil {
-			cond = append(cond, fmt.Sprintf("%s >= %s", field, req.StartTime))
+			cond = append(cond, fmt.Sprintf("%s >= '%s'", field, req.StartTime))
 		}
 	}
 	if req.EndTime != "" {
 		_, err := time.Parse(dateTime, req.EndTime)
 		if err == nil {
-			cond = append(cond, fmt.Sprintf("%s < %s", field, req.EndTime))
+			cond = append(cond, fmt.Sprintf("%s < '%s'", field, req.EndTime))
 		}
 	}
 	return cond
@@ -73,11 +73,11 @@ func (req TimestampReq) FieldSQLCond(field string) []string {
 	}
 	if req.StartTimestamp > 0 {
 		s := time.Unix(req.StartTimestamp, 0)
-		cond = append(cond, fmt.Sprintf("%s >= %s", field, s.Format(dateTime)))
+		cond = append(cond, fmt.Sprintf("%s >= '%s'", field, s.Format(dateTime)))
 	}
 	if req.EndTimestamp > 0 {
 		e := time.Unix(req.EndTimestamp, 0)
-		cond = append(cond, fmt.Sprintf("%s < %s", field, e.Format(dateTime)))
+		cond = append(cond, fmt.Sprintf("%s < '%s'", field, e.Format(dateTime)))
 	}
 	return cond
 }
