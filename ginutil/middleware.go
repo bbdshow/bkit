@@ -16,8 +16,10 @@ import (
 	"time"
 )
 
-var AuthorizationHeader = "X-Authorization"
-var SignatureHeader = "X-Signature"
+var (
+	AuthorizationHeader = "X-Authorization"
+	SignatureHeader     = "X-Signature"
+)
 
 func ContextWithTraceId() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -208,7 +210,7 @@ type SignConfig struct {
 	SupportMethods []string `defval:"GET,POST,PUT,DELETE"`
 }
 
-// ApiSignVerify API 接口签名 必需设置获取密钥的方法
+// ApiSignVerify API signature, must setting get secretKey function
 func ApiSignVerify(cfg *SignConfig, getSecretKey func(accessKey string) (string, error)) gin.HandlerFunc {
 	apiSign := sign.NewAPISign(&cfg.Config)
 	apiSign.SetGetSecretKey(getSecretKey)
@@ -227,13 +229,24 @@ func ApiSignVerify(cfg *SignConfig, getSecretKey func(accessKey string) (string,
 		}
 		if isSupport {
 			if err := apiSign.Verify(c.Request, SignatureHeader); err != nil {
-				logs.Qezap.Warn("API签名错误", zap.Error(err), logs.Qezap.ConditionOne(c.Request.URL.Path), logs.Qezap.FieldTraceID(c.Request.Context()))
+				logs.Qezap.Warn("APISignatureException", zap.Error(err), logs.Qezap.ConditionOne(c.Request.URL.Path), logs.Qezap.FieldTraceID(c.Request.Context()))
 				RespErr(c, errc.ErrAuthSignatureInvalid, http.StatusUnauthorized)
 				c.Abort()
 				return
 			}
 		}
-
 		c.Next()
 	}
+}
+
+func GetApiSignAccessKey(c *gin.Context) string {
+	h := c.GetHeader(SignatureHeader)
+	if h == "" {
+		return ""
+	}
+	accessKey, _, _, err := sign.DecodeHeaderVal(h)
+	if err == nil {
+		return accessKey
+	}
+	return ""
 }
