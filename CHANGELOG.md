@@ -1,4 +1,6 @@
-
+### v0.1.7
+1. add ToInternalError
+2. ad GetApiSignAccessKey
 ### v0.1.6
 1. add iemail hermes
 2. fixBug findSql

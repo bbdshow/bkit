@@ -123,3 +123,16 @@ func callers() []uintptr {
 	n := runtime.Callers(3, pcs[:])
 	return pcs[0:n]
 }
+
+// ToInternalError if not Error, to internal error
+func ToInternalError(err error) error {
+	if err == nil {
+		return nil
+	}
+	e, ok := err.(Error)
+	if ok {
+		return e
+	}
+	// to internal
+	return NewError(InternalErr, err.Error())
+}
