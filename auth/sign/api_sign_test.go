@@ -135,32 +135,42 @@ func jsonSign(path string, timestamp string, body io.Reader) string {
 	return HmacSha1ToBase64(str, "abc_secretKey")
 }
 
-type testObj struct {
-	Z        string    `json:"z"`
-	A        int       `json:"a"`
-	Bools    []bool    `json:"bools"`
-	Strs     []string  `json:"strs"`
-	F        float64   `json:"f"`
-	Float64s []float64 `json:"float64s"`
-	Arr      []k       `json:"arr"`
-	K        k         `json:"k"`
+type mockSignStruct struct {
+	Txt               string         `json:"txt"`
+	Integer           int            `json:"integer"`
+	SliceBool         []bool         `json:"sliceBool"`
+	SliceString       []string       `json:"sliceString"`
+	Float             float64        `json:"float"`
+	SliceFloat        []float64      `json:"float64s"`
+	SliceCustomStruct []CustomStruct `json:"sliceCustomStruct"`
+	CustomStruct      CustomStruct   `json:"customStruct"`
 }
-type k struct {
-	K  int `json:"k"`
-	K2 int `json:"k2"`
+type CustomStruct struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
 }
 
 func TestSortToString(t *testing.T) {
-	obj := testObj{
-		Z:        "z",
-		A:        0,
-		Bools:    []bool{true, false},
-		Strs:     []string{"1", "2"},
-		F:        90.8712,
-		Float64s: []float64{0.1, 0.2},
-		Arr:      []k{{K: 1, K2: 2}, {K: 3, K2: 4}, {K: 1, K2: 2}},
-		K: k{
-			K2: 222,
+	obj := mockSignStruct{
+		Txt:         "Mock",
+		Integer:     100,
+		SliceBool:   []bool{true, false},
+		SliceString: []string{"A", "B"},
+		Float:       9.99,
+		SliceFloat:  []float64{8.88, 9.99},
+		SliceCustomStruct: []CustomStruct{
+			{
+				Name: "SliceCustomStruct",
+				Age:  10,
+			},
+			{
+				Name: "SliceCustomStruct",
+				Age:  20,
+			},
+		},
+		CustomStruct: CustomStruct{
+			Name: "CustomStruct",
+			Age:  10,
 		},
 	}
 	str, _ := json.Marshal(obj)
@@ -171,5 +181,13 @@ func TestSortToString(t *testing.T) {
 	}
 	fmt.Println(string(str))
 
-	fmt.Println(body.SortToString("&"))
+	ts := fmt.Sprintf("%d", time.Now().Unix())
+	sortStr, _ := body.SortToString("&")
+
+	rawStr := sortStr + ts
+	fmt.Println(rawStr)
+
+	signed := HmacHash(HmacSha256Hex, rawStr, "lc3pptr2g2sumgvcbt5yw5g3e0tf8oni")
+
+	fmt.Println(signed)
 }
