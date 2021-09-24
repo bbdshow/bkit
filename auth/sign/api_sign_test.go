@@ -190,4 +190,6 @@ func TestSortToString(t *testing.T) {
 	signed := HmacHash(HmacSha256Hex, rawStr, "lc3pptr2g2sumgvcbt5yw5g3e0tf8oni")
 
 	fmt.Println(signed)
+
+	fmt.Println(HmacHash(HmacSha256Hex, "openId=8JCV80S92NDYLTCH3DPMPGT1XHKH1155H19CF0TH1632473877", "lc3pptr2g2sumgvcbt5yw5g3e0tf8oni"))
 }

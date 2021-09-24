@@ -1,3 +1,5 @@
+### v0.1.8
+1.fix go.mod
 ### v0.1.7
 1. add ToInternalError
 2. ad GetApiSignAccessKey
