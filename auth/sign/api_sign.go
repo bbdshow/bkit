@@ -215,12 +215,17 @@ func SortParamForm(req *http.Request, path bool) (string, error) {
 		for _, k := range paramNames {
 			query = append(query, url.QueryEscape(k)+"="+url.QueryEscape(req.Form.Get(k)))
 		}
-		if path {
-			resource = req.URL.Path + "?" + strings.Join(query, "&")
+		resource = strings.Join(query, "&")
+	}
+
+	if path {
+		if len(resource) > 0 {
+			resource = req.URL.Path + "?" + resource
 		} else {
-			resource = strings.Join(query, "&")
+			resource = req.URL.Path
 		}
 	}
+
 	return resource, nil
 }
 

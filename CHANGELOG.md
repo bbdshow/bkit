@@ -1,3 +1,5 @@
+### v0.1.9
+1.fixBug: apiSign enable Path sign
 ### v0.1.8
 1.fix go.mod
 ### v0.1.7
