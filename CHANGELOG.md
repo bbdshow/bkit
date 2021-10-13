@@ -1,3 +1,6 @@
+### v0.2.0
+1. add copier pkg, strcut mapping
+
 ### v0.1.10
 1. no auth: httpCode 401 replace 403
 ### v0.1.9
