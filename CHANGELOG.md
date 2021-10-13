@@ -1,3 +1,5 @@
+### v0.1.10
+1. no auth: httpCode 401 replace 403
 ### v0.1.9
 1.fixBug: apiSign enable Path sign
 ### v0.1.8

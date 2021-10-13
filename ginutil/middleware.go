@@ -171,7 +171,7 @@ func JWTAuthVerify(enable bool, signingKey ...string) gin.HandlerFunc {
 		token := c.GetHeader(AuthorizationHeader)
 		if token == "" {
 			logs.Qezap.Warn("JWTAuthException", zap.String("Authorization", "request header required"), logs.Qezap.FieldTraceID(c.Request.Context()))
-			RespErr(c, errc.ErrAuthRequired, http.StatusUnauthorized)
+			RespErr(c, errc.ErrAuthRequired, http.StatusForbidden)
 			c.Abort()
 			return
 		}
@@ -180,23 +180,23 @@ func JWTAuthVerify(enable bool, signingKey ...string) gin.HandlerFunc {
 		if err != nil {
 			logs.Qezap.Warn("JWTAuthException", zap.String("JWT", err.Error()), logs.Qezap.FieldTraceID(c.Request.Context()))
 			if strings.Contains(err.Error(), "expired") {
-				RespErr(c, errc.ErrAuthExpired, http.StatusUnauthorized)
+				RespErr(c, errc.ErrAuthExpired, http.StatusForbidden)
 			} else {
-				RespErr(c, errc.ErrAuthInvalid, http.StatusUnauthorized)
+				RespErr(c, errc.ErrAuthInvalid, http.StatusForbidden)
 			}
 			c.Abort()
 			return
 		}
 		if !ok {
 			logs.Qezap.Warn("JWTAuthException", zap.String("JWT", "verify invalid"), logs.Qezap.FieldTraceID(c.Request.Context()))
-			RespErr(c, errc.ErrAuthInvalid, http.StatusUnauthorized)
+			RespErr(c, errc.ErrAuthInvalid, http.StatusForbidden)
 			c.Abort()
 			return
 		}
 
 		if err := SetJWTDataToContext(c, token, signingKey...); err != nil {
 			logs.Qezap.Warn("JWTAuthException", zap.String("SettingJWTData", err.Error()), logs.Qezap.FieldTraceID(c.Request.Context()))
-			RespErr(c, errc.ErrAuthInternalErr, http.StatusUnauthorized)
+			RespErr(c, errc.ErrAuthInternalErr, http.StatusForbidden)
 			c.Abort()
 			return
 		}
@@ -230,7 +230,7 @@ func ApiSignVerify(cfg *SignConfig, getSecretKey func(accessKey string) (string,
 		if isSupport {
 			if err := apiSign.Verify(c.Request, SignatureHeader); err != nil {
 				logs.Qezap.Warn("APISignatureException", zap.Error(err), logs.Qezap.ConditionOne(c.Request.URL.Path), logs.Qezap.FieldTraceID(c.Request.Context()))
-				RespErr(c, errc.ErrAuthSignatureInvalid, http.StatusUnauthorized)
+				RespErr(c, errc.ErrAuthSignatureInvalid, http.StatusForbidden)
 				c.Abort()
 				return
 			}
