@@ -1,3 +1,6 @@
+### v0.2.1
+1. fix Req Id tag
+
 ### v0.2.0
 1. add copier pkg, strcut mapping
 
