@@ -116,7 +116,7 @@ type IdReq struct {
 }
 
 type IdOmitReq struct {
-	IdReq `json:"id" form:"id" binding:"omitempty,gt=0"`
+	Id int64 `json:"id" form:"id" binding:"omitempty,min=1"`
 }
 
 type UidReq struct {
@@ -124,5 +124,5 @@ type UidReq struct {
 }
 
 type UidOmitReq struct {
-	UidReq `json:"uid" form:"uid" binding:"omitempty,min=1"`
+	Uid int64 `json:"uid" form:"uid" binding:"omitempty,min=1"`
 }
