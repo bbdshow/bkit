@@ -86,6 +86,14 @@ func (oss *AliOSS) Put(ctx context.Context, key string, data io.Reader, size int
 	return oss.cliBucket.PutObject(key, data)
 }
 
+func (oss *AliOSS) Get(ctx context.Context, key string) (io.ReadCloser, error) {
+	return oss.cliBucket.GetObject(key)
+}
+
+func (oss *AliOSS) GetWithURL(ctx context.Context, url string) (io.ReadCloser, error) {
+	return oss.cliBucket.GetObjectWithURL(url)
+}
+
 func (oss *AliOSS) Base64Put(ctx context.Context, key string, raw []byte, mimeType string) error {
 	return nil
 }

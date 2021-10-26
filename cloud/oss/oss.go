@@ -6,6 +6,9 @@ import (
 )
 
 type Operation interface {
+	Get(ctx context.Context, key string) (io.ReadCloser, error)
+	GetWithURL(ctx context.Context, url string) (io.ReadCloser, error)
+
 	Put(ctx context.Context, key string, data io.Reader, size int64, mimeType string) error
 	Base64Put(ctx context.Context, key string, raw []byte, mimeType string) error
 	Delete(key string) error
