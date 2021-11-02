@@ -1,3 +1,5 @@
+### v0.2.2
+1. fixBug: xhttp Post sign url path
 ### v0.2.1
 1. fix Req Id tag
 

@@ -71,7 +71,9 @@ func (c *SignClient) sign(req *http.Request, body []byte) error {
 			if err != nil {
 				return err
 			}
-			str = fmt.Sprintf("%s?%s", req.URL.Path, str)
+			if c.cfg.PathSign {
+				str = req.URL.Path + "?" + str
+			}
 			rawStr = str + ts
 		}
 	}
