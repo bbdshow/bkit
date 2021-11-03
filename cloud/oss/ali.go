@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
+	"time"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/sts"
@@ -59,7 +61,7 @@ func NewAliOSS(cfg AliOSSConfig) (*AliOSS, error) {
 		return nil, err
 	}
 
-	oss.sts, err = sts.NewClientWithAccessKey("", oss.accessKey, oss.secretKey)
+	oss.sts, err = sts.NewClientWithAccessKey(oss.regionId, oss.accessKey, oss.secretKey)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +94,26 @@ func (oss *AliOSS) Get(ctx context.Context, key string) (io.ReadCloser, error) {
 
 func (oss *AliOSS) GetWithURL(ctx context.Context, url string) (io.ReadCloser, error) {
 	return oss.cliBucket.GetObjectWithURL(url)
+}
+
+func (oss *AliOSS) GetModifyTime(ctx context.Context, key string) (time.Time, error) {
+	header, err := oss.cliBucket.GetObjectDetailedMeta(key)
+	if err != nil {
+		return time.Time{}, err
+	}
+	if header == nil {
+		return time.Time{}, fmt.Errorf("modifyTime not found")
+	}
+
+	if header.Get("Last-Modified") != "" {
+		lm, err := http.ParseTime(header.Get("Last-Modified"))
+		if err != nil {
+			return lm, err
+		}
+		return lm, nil
+	}
+
+	return time.Time{}, nil
 }
 
 func (oss *AliOSS) Base64Put(ctx context.Context, key string, raw []byte, mimeType string) error {

@@ -3,6 +3,7 @@ package oss
 import (
 	"context"
 	"io"
+	"time"
 )
 
 type Operation interface {
@@ -19,4 +20,7 @@ type Operation interface {
 	URL(key string) string
 	// temp Put action Token
 	PutToken(expiredSec int, dir string) (token, accessKey, secretKey string, err error)
+
+	//Meta
+	GetModifyTime(ctx context.Context, key string) (time.Time, error)
 }
