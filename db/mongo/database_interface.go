@@ -13,14 +13,17 @@ import (
 
 type DataBaseInterface interface {
 	// extend quick function
+
 	Exists(ctx context.Context, collection string, filter interface{}) (bool, error)
 	FindOne(ctx context.Context, collection string, filter interface{}, doc interface{}, opt ...*options.FindOneOptions) (bool, error)
 	Find(ctx context.Context, collection string, filter bson.M, docs interface{}, opt ...*options.FindOptions) error
 	FindCount(ctx context.Context, collection string, filter interface{}, docs interface{}, findOpt *options.FindOptions, countOpt *options.CountOptions) (int64, error)
 	ListCollectionNames(ctx context.Context, prefix ...string) ([]string, error)
 	UpsertCollectionIndexMany(indexMany ...[]Index) error
+	Transaction(ctx context.Context, tx func(sessCtx SessionContext) error) error
 
-	// 原有方法
+	// original method
+
 	Client() *mongo.Client
 	Name() string
 	Collection(name string, opts ...*options.CollectionOptions) *mongo.Collection

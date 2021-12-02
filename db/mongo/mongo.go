@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,6 +13,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+type SessionContext mongo.SessionContext
 
 // NewMongoClientByURI uri = mongo://...
 func NewMongoClientByURI(ctx context.Context, uri string) (*mongo.Client, error) {
@@ -115,6 +119,41 @@ func (db *Database) ListCollectionNames(ctx context.Context, prefix ...string) (
 		}
 	}
 	return db.Database.ListCollectionNames(ctx, filter)
+}
+
+// Transaction Only supports single db
+func (db *Database) Transaction(ctx context.Context, tx func(sessCtx SessionContext) error) error {
+	return db.Client().UseSession(ctx, func(sessCtx mongo.SessionContext) error {
+		err := sessCtx.StartTransaction(options.Transaction().
+			SetReadConcern(readconcern.Snapshot()).
+			SetWriteConcern(writeconcern.New(writeconcern.WMajority())))
+		if err != nil {
+			return err
+		}
+
+		if err := tx(sessCtx); err != nil {
+			e := sessCtx.AbortTransaction(sessCtx)
+			if e != nil {
+				return fmt.Errorf("tx: %v abort: %v", err, e)
+			}
+			return err
+		}
+
+		for {
+			err := sessCtx.CommitTransaction(sessCtx)
+			switch e := err.(type) {
+			case nil:
+				return nil
+			case mongo.CommandError:
+				if e.HasErrorLabel("UnknownTransactionCommitResult") {
+					continue
+				}
+				return e
+			default:
+				return e
+			}
+		}
+	})
 }
 
 type Index struct {

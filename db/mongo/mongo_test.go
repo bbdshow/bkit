@@ -3,8 +3,10 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"testing"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -66,4 +68,30 @@ next:
 	}
 
 	t.Fail()
+}
+
+func TestDatabase_Transaction(t *testing.T) {
+	database := "tx_test"
+	uri := "mongodb://root:111111@192.168.10.25:27017,192.168.10.26:27017/?authSource=admin$replicaSet=fbj&authSource=admin&maxPoolSize=50"
+	db, err := NewDatabase(context.Background(), uri, database)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = db.Transaction(context.Background(), func(sessCtx SessionContext) error {
+		type r struct {
+			Name string    `bson:"name"`
+			At   time.Time `bson:"at"`
+		}
+		iRet, err := db.Collection("tx").InsertOne(sessCtx, &r{Name: "tx_key", At: time.Now()})
+		if err != nil {
+			return err
+		}
+		log.Println(iRet)
+		return fmt.Errorf("exception")
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 }
