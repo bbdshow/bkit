@@ -11,14 +11,14 @@ type Client struct {
 }
 
 type Options struct {
-	Username string `defval:"root"`
-	Password string `defval:"111111" null:""`
+	Username string
+	Password string
 	// max retry,  not retry = -1,  default, single=0 cluster=8
 	MaxRetries int
 	// timeout
-	DialTimeout  time.Duration `defval:"60s"`
-	ReadTimeout  time.Duration `defval:"300s"`
-	WriteTimeout time.Duration `defval:"300s"`
+	DialTimeoutSec  int64 `defval:"60"`
+	ReadTimeoutSec  int64 `defval:"300"`
+	WriteTimeoutSec int64 `defval:"300"`
 }
 
 type Config struct {
@@ -35,9 +35,9 @@ func NewRedisClient(cfg Config) (*Client, error) {
 		Password:     cfg.Password,
 		DB:           cfg.DB,
 		MaxRetries:   cfg.MaxRetries,
-		DialTimeout:  cfg.DialTimeout,
-		ReadTimeout:  cfg.ReadTimeout,
-		WriteTimeout: cfg.WriteTimeout,
+		DialTimeout:  time.Duration(cfg.DialTimeoutSec) * time.Second,
+		ReadTimeout:  time.Duration(cfg.ReadTimeoutSec) * time.Second,
+		WriteTimeout: time.Duration(cfg.WriteTimeoutSec) * time.Second,
 	})
 	sCmd := cli.Ping()
 	if sCmd.Err() != nil {
@@ -91,15 +91,15 @@ type ClusterClient struct {
 	*redis.ClusterClient
 }
 
-func NewRedisClusterClient(config ClusterConfig) (*ClusterClient, error) {
+func NewRedisClusterClient(cfg ClusterConfig) (*ClusterClient, error) {
 	cli := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs:        config.Addrs,
-		Username:     config.Username,
-		Password:     config.Password,
-		MaxRetries:   config.MaxRetries,
-		DialTimeout:  config.DialTimeout,
-		ReadTimeout:  config.ReadTimeout,
-		WriteTimeout: config.WriteTimeout,
+		Addrs:        cfg.Addrs,
+		Username:     cfg.Username,
+		Password:     cfg.Password,
+		MaxRetries:   cfg.MaxRetries,
+		DialTimeout:  time.Duration(cfg.DialTimeoutSec) * time.Second,
+		ReadTimeout:  time.Duration(cfg.ReadTimeoutSec) * time.Second,
+		WriteTimeout: time.Duration(cfg.WriteTimeoutSec) * time.Second,
 	})
 
 	sCmd := cli.Ping()
