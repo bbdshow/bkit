@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/bbdshow/bkit/ginutil"
 	"github.com/bbdshow/bkit/runner"
-	"net/http"
 	"os"
 	"time"
 )
@@ -30,11 +30,18 @@ func main() {
 	}()
 
 	go func() {
-		if err := runner.RunServer(runner.NewHttpServer(http.NotFoundHandler()),
+		midFlag := ginutil.MStd | ginutil.MPprof
+		httpHandler := ginutil.DefaultEngine(midFlag)
+		if err := runner.RunServer(runner.NewHttpServer(httpHandler),
 			runner.WithContext(ctx),
 			runner.WithListenAddr("0.0.0.0:18080")); err != nil {
 			os.Exit(1)
 		}
+		//if err := runner.RunServer(runner.NewHttpServer(http.NotFoundHandler()),
+		//	runner.WithContext(ctx),
+		//	runner.WithListenAddr("0.0.0.0:18080")); err != nil {
+		//	os.Exit(1)
+		//}
 	}()
 
 	time.Sleep(1 * time.Second)
