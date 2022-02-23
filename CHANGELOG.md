@@ -1,3 +1,5 @@
+### v0.2.5
+1. util package add httplib, http request client
 ### v0.2.4
 1. ginutil: add http pprof handler
 ### v0.2.2
