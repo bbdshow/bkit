@@ -9,25 +9,24 @@ import (
 	"net/http"
 )
 
-// DingDing
+// DingDing dingding alarm implementation
 type DingDing struct {
 	hookURL string
 	client  *http.Client
 }
 
-// NewDingDing
 func NewDingDing() *DingDing {
 	return &DingDing{
 		client: &http.Client{},
 	}
 }
 
-// SetHookURL 设置RequestURL
+// SetHookURL set RequestURL eg: https://oapi.dingtalk.com/robot/send?access_token=xxxxx
 func (dd *DingDing) SetHookURL(url string) {
 	dd.hookURL = url
 }
 
-// Send
+// Send text message
 func (dd *DingDing) Send(ctx context.Context, content string) error {
 	reqBody := struct {
 		MsgType string `json:"msgtype"`
@@ -70,7 +69,7 @@ func (dd *DingDing) Send(ctx context.Context, content string) error {
 	return nil
 }
 
-// Method
+// Method alert method
 func (dd *DingDing) Method() string {
 	return "DingDing"
 }

@@ -1,3 +1,5 @@
+### v0.2.6
+1. alert add telegram method implement
 ### v0.2.5
 1. util package add httplib, http request client
 ### v0.2.4
