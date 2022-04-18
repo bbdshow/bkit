@@ -74,7 +74,6 @@ func (tel *Telegram) Send(ctx context.Context, content string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(byt))
 	if err := json.Unmarshal(byt, &respBody); err != nil {
 		return err
 	}
