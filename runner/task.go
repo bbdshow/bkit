@@ -28,8 +28,9 @@ func NewTaskServer() *TaskServer {
 }
 
 type timeAfterFunc struct {
-	d  time.Duration
-	fn func(ctx context.Context)
+	d      time.Duration
+	isOnce bool
+	fn     func(ctx context.Context)
 }
 
 func (s *TaskServer) Run(c *Config) error {
@@ -51,6 +52,9 @@ func (s *TaskServer) Run(c *Config) error {
 						fn.fn(ctx)
 						wg.Done()
 					}()
+					if fn.isOnce {
+						return
+					}
 				}
 			}
 		}
@@ -76,6 +80,8 @@ func (s *TaskServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
+//you can use AddTickerTimeAfterFunc replace this
+//Deprecated
 func (s *TaskServer) AddTimeAfterFunc(d time.Duration, fn func(ctx context.Context)) error {
 	if d <= 0 {
 		return fmt.Errorf("d required")
@@ -86,6 +92,38 @@ func (s *TaskServer) AddTimeAfterFunc(d time.Duration, fn func(ctx context.Conte
 	s.afters = append(s.afters, timeAfterFunc{
 		d:  d,
 		fn: fn,
+	})
+	return nil
+}
+
+// AddOnceTimeAfterFunc after d, once exec
+func (s *TaskServer) AddOnceTimeAfterFunc(d time.Duration, fn func(ctx context.Context)) error {
+	if d <= 0 {
+		return fmt.Errorf("d required")
+	}
+	if fn == nil {
+		return fmt.Errorf("func required")
+	}
+	s.afters = append(s.afters, timeAfterFunc{
+		d:      d,
+		isOnce: true,
+		fn:     fn,
+	})
+	return nil
+}
+
+// AddTickerTimeAfterFunc ticker d, loop exec
+func (s *TaskServer) AddTickerTimeAfterFunc(d time.Duration, fn func(ctx context.Context)) error {
+	if d <= 0 {
+		return fmt.Errorf("d required")
+	}
+	if fn == nil {
+		return fmt.Errorf("func required")
+	}
+	s.afters = append(s.afters, timeAfterFunc{
+		d:      d,
+		isOnce: false,
+		fn:     fn,
 	})
 	return nil
 }
