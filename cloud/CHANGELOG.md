@@ -1,3 +1,5 @@
+### v0.0.5
+upgrade to github.com/qiniu/go-sdk/v7 v7.12.1
 ### v0.0.4
 replace github.com/qiniu/api.v7/v7 v7.8.2 => github.com/qiniu/go-sdk/v7 v7.12.1
 ### v0.0.3
