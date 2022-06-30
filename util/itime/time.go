@@ -1,6 +1,7 @@
 package itime
 
 import (
+	"context"
 	"math"
 	"time"
 )
@@ -36,4 +37,20 @@ func UnixSecToDate(sec int64) time.Time {
 	y, m, d := time.Unix(sec, 0).Date()
 	date := time.Date(y, m, d, 0, 0, 0, 0, time.Local)
 	return date
+}
+
+// CtxAfterSecDeadline if not deadline, return defSec, if defSec <= 0, return int32 max sec duration
+func CtxAfterSecDeadline(ctx context.Context, defSec int32) time.Duration {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		if defSec <= 0 {
+			defSec = math.MaxInt32
+		}
+		return time.Duration(defSec) * time.Second
+	}
+	sec := int32(deadline.Sub(time.Now()).Seconds())
+	if sec <= 0 {
+		sec = defSec
+	}
+	return time.Duration(sec) * time.Second
 }
