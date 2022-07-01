@@ -30,7 +30,7 @@ func RandNumCode(strLen int) string {
 	return s + val
 }
 
-// RandAlphaNumString
+// RandAlphaNumString rand x len string
 func RandAlphaNumString(strLen int, lower ...bool) string {
 	str := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	bytes := []byte(str)
@@ -45,16 +45,46 @@ func RandAlphaNumString(strLen int, lower ...bool) string {
 	return string(result)
 }
 
-// PasswordSlatMD5
+// PasswordSlatMD5 md5 pwd & slat
 func PasswordSlatMD5(password, slat string) string {
 	return Md5String(password, ":", slat)
 }
 
-// Md5String
+// Md5String md5 strings
 func Md5String(s string, multi ...string) string {
 	for _, v := range multi {
 		s += v
 	}
 	val := md5.Sum([]byte(s))
 	return fmt.Sprintf("%x", val)
+}
+
+// Substring if start < 0, desc, if arg invalid, return str   [start,end)
+func Substring(str string, start, end int) string {
+	s := []rune(str)
+	if start > len(s) || end > len(s) || end < start {
+		return str
+	}
+	if start < 0 {
+		s = s[len(s)-end:]
+		return string(s)
+	}
+	return string(s[start:end])
+}
+
+// Substr if start < 0, desc, if arg invalid, return str  [start,start+length)
+func Substr(str string, start, length int) string {
+	s := []rune(str)
+	if start > len(s) || length > len(s) || length <= 0 {
+		return str
+	}
+	if start < 0 {
+		s = s[len(s)-length:]
+		return string(s)
+	}
+	maxLength := len(s) - start
+	if length > maxLength {
+		length = maxLength
+	}
+	return string(s[start : start+length])
 }

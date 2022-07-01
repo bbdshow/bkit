@@ -26,3 +26,35 @@ func TestPasswordSlat(t *testing.T) {
 		t.Fatal(p3, p4)
 	}
 }
+
+func TestSubstring(t *testing.T) {
+	str := "hello word - 你好世界"
+	v1 := Substring(str, 3, 8)
+	if v1 != "lo wo" {
+		t.Fatal(v1)
+	}
+	v2 := Substring(str, -1, 2)
+	if v2 != "世界" {
+		t.Fatal(v2)
+	}
+	v3 := Substring(str, -1, 17)
+	if v3 != "hello word - 你好世界" {
+		t.Fatal(v3)
+	}
+}
+
+func TestSubstr(t *testing.T) {
+	str := "hello word - 你好世界"
+	v1 := Substr(str, 3, 8)
+	if v1 != "lo word " {
+		t.Fatal(v1)
+	}
+	v2 := Substr(str, -1, 2)
+	if v2 != "世界" {
+		t.Fatal(v2)
+	}
+	v3 := Substr(str, 16, 17)
+	if v3 != "界" {
+		t.Fatal(v3)
+	}
+}
