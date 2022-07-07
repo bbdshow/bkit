@@ -25,18 +25,18 @@ const (
 )
 
 var Messages = map[int]string{
-	Failed:               "failed",
-	Success:              "ok",
-	InternalErr:          "internal error",
-	AuthInternalErr:      "auth internal error",
-	AuthRequired:         "auth Authorization header required",
-	AuthExpired:          "auth expired",
-	AuthInvalid:          "auth invalid",
-	AuthSignatureInvalid: "auth signature invalid",
+	Failed:               "Failed",
+	Success:              "Ok",
+	InternalErr:          "Internal error",
+	AuthInternalErr:      "Auth internal error",
+	AuthRequired:         "Auth Authorization header required",
+	AuthExpired:          "Auth expired",
+	AuthInvalid:          "Auth invalid",
+	AuthSignatureInvalid: "Auth signature invalid",
 
-	ParamInvalid: "param validator invalid",
+	ParamInvalid: "Param validator invalid",
 
-	NotFound: "not found",
+	NotFound: "Not found",
 }
 
 var (
