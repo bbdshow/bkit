@@ -1,3 +1,7 @@
+### v0.2.8
+1. gen.str Add Substring  substr func
+2. errc msg EN uppercase, add msg CN support
+3. itime.CtxAfterSecDeadline
 ### v0.2.7
 1. task runner: Deprecated AddTimeAfterFunc, replace to AddTickerTimeAfterFunc, AddOnceTimeAfterFunc
 ### v0.2.6

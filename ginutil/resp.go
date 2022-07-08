@@ -55,7 +55,7 @@ type ResponseErr struct {
 
 func Resp(c *gin.Context, httpCode int, data interface{}, err error) {
 	code := errc.Success
-	message := errc.Messages[code]
+	message := errc.GetMessage(code)
 	if err != nil {
 		if e, ok := err.(errc.Error); ok {
 			code = e.Code
@@ -84,7 +84,7 @@ func Resp(c *gin.Context, httpCode int, data interface{}, err error) {
 				logs.Qezap.FieldTraceID(c.Request.Context()),
 				zap.String("latency", time.Now().Sub(traceId.Time()).String()))
 			// hide system error
-			message = errc.Messages[code]
+			message = errc.GetMessage(code)
 		}
 	}
 

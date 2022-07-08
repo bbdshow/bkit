@@ -24,6 +24,28 @@ const (
 	NotFound = 404
 )
 
+var Lang = "EN"
+
+func SetLang(lang string) {
+	Lang = lang
+}
+
+var MessagesCN = map[int]string{
+	Failed:      "失败",
+	Success:     "成功",
+	InternalErr: "内部错误",
+
+	AuthInternalErr:      "权限内部错误",
+	AuthRequired:         "权限请求头必传",
+	AuthExpired:          "权限过期",
+	AuthInvalid:          "权限无效",
+	AuthSignatureInvalid: "权限签名无效",
+
+	ParamRequired: "参数必传",
+	ParamInvalid:  "参数验证无效",
+	NotFound:      "资源不存在",
+}
+
 var Messages = map[int]string{
 	Failed:               "Failed",
 	Success:              "Ok",
@@ -34,24 +56,35 @@ var Messages = map[int]string{
 	AuthInvalid:          "Auth invalid",
 	AuthSignatureInvalid: "Auth signature invalid",
 
-	ParamInvalid: "Param validator invalid",
+	ParamRequired: "Param required",
+	ParamInvalid:  "Param validator invalid",
 
 	NotFound: "Not found",
 }
 
+func GetMessage(code int) string {
+	switch Lang {
+	case "CN":
+		return MessagesCN[code]
+	default:
+		return Messages[code]
+	}
+}
+
 var (
-	ErrFailed      = NewError(Failed, Messages[Failed])
-	ErrInternalErr = NewError(InternalErr, Messages[InternalErr])
+	ErrFailed      = NewError(Failed, GetMessage(Failed))
+	ErrInternalErr = NewError(InternalErr, GetMessage(InternalErr))
 
-	ErrAuthInternalErr      = NewError(AuthInternalErr, Messages[AuthInternalErr])
-	ErrAuthRequired         = NewError(AuthRequired, Messages[AuthRequired])
-	ErrAuthExpired          = NewError(AuthExpired, Messages[AuthExpired])
-	ErrAuthInvalid          = NewError(AuthInvalid, Messages[AuthInvalid])
-	ErrAuthSignatureInvalid = NewError(AuthSignatureInvalid, Messages[AuthSignatureInvalid])
+	ErrAuthInternalErr      = NewError(AuthInternalErr, GetMessage(AuthInternalErr))
+	ErrAuthRequired         = NewError(AuthRequired, GetMessage(AuthRequired))
+	ErrAuthExpired          = NewError(AuthExpired, GetMessage(AuthExpired))
+	ErrAuthInvalid          = NewError(AuthInvalid, GetMessage(AuthInvalid))
+	ErrAuthSignatureInvalid = NewError(AuthSignatureInvalid, GetMessage(AuthSignatureInvalid))
 
-	ErrParamInvalid = NewError(ParamInvalid, Messages[ParamInvalid])
+	ErrParamRequired = NewError(ParamRequired, GetMessage(ParamRequired))
+	ErrParamInvalid  = NewError(ParamInvalid, GetMessage(ParamInvalid))
 
-	ErrNotFound = NewError(NotFound, Messages[NotFound])
+	ErrNotFound = NewError(NotFound, GetMessage(NotFound))
 )
 
 type Error struct {
