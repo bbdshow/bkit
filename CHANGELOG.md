@@ -1,3 +1,5 @@
+### v0.2.9
+1. inviteCode: Support [base length pad] customization
 ### v0.2.8
 1. gen.str Add Substring  substr func
 2. errc msg EN uppercase, add msg CN support

@@ -6,6 +6,11 @@ import (
 	"testing"
 )
 
+func init() {
+	//SetBase("ETN6BGQF7P5IK3MUAR4HV8S2DJZX9WYL")
+	//SetLength(8)
+}
+
 func TestEncode(t *testing.T) {
 	for i := 1; i < 10000000; i++ {
 		code := Encode(uint64(i))
@@ -20,7 +25,7 @@ func TestEncode(t *testing.T) {
 }
 
 func TestDecode(t *testing.T) {
-	code := Encode(15)
+	code := Encode(1)
 	fmt.Println(code)
 	id := Decode(code)
 	fmt.Println(id)
