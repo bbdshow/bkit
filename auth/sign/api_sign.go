@@ -16,20 +16,19 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-/*
-1. Sign Header Key = X-Signature  Value = accessKey:signStr:timestamp (: split elem)
-2. Sign Method： Method(rawStr+timestamp, secretKey) signStr(rawStr+timestamp) => encoding Base64 | Hex(default)
-3. rawStr eg: GET http://example.com/hello?n=1&a=2  => a=2&n=11626167650 param key string attaches the methods
-4. other request http method，for Content-Type: application/json {"n":"m","a":2} param key string attaches the methods => {"a":2,"n":"m"} => a=2&n=m
-5. rawStr+timestamp => a=2&n=m1626167650 timestamp(sec)  verify sign time valid（default 10s）
-6. if Config.PathSign = true URL.Path also need to sign, rawStr => /path?k=v&k1=v1 , default Config.PathSign = false
-*/
-// APISign API Sign
+// APISign API Param Sign
+// 1. rawStr eg: GET http://example.com/hello?n=1&a=2  Key["n","a"]-ASC Sort["a","n"] GetParam(a) a=2&n=1 param key string attaches the methods
+// 2. other request http method，for Content-Type: application/json {"n":"m","a":2} Key ASC Sort,param key string attaches the methods => {"a":2,"n":"m"} => a=2&n=m
+// 3. rawStr+timestamp => a=2&n=m1626167650 (1626167650 is unix timestamp), verify sign time valid（default 10s）
+// 4. Sign Method： Method(rawStr+timestamp, secretKey) signed text encode [Base64, Hex(default)]
+//    Method=[HMAC-SHA256,HMAC-SHA1] Encode=[Base64,Hex] Default = HMAC-SHA256-HEX
+// 5. default: signStr=Hex(HMAC-SHA256(rawStr+timestamp,secretKey))
+// 6. Sign http request Header X-Signature=accessKey:signStr:timestamp (: split elem)
 type APISign struct {
 	cfg *Config
 
-	cache        caches.Cacher
-	getSecretKey func(accessKey string) (string, error)
+	cache       caches.Cacher
+	secretKeyFn func(accessKey string) (string, error)
 }
 type Method string
 
@@ -41,31 +40,31 @@ const (
 )
 
 var (
-	defSignValidDuration = 10 * time.Second
+	signTTL = 10 * time.Second
 )
 
 type Config struct {
+	// Sign TTL
 	SignValidDuration time.Duration `defval:"10s"`
 	Method            `defval:"HMAC-SHA256-HEX"`
-	PathSign          bool `defval:"false"`
 }
 
-// signValidDuration sign valid time interval
+// NewAPISign api param sign
 func NewAPISign(cfg *Config) *APISign {
 
 	apiSign := &APISign{
-		cfg:          cfg,
-		cache:        caches.NewLRUMemory(1000),
-		getSecretKey: nil,
+		cfg:         cfg,
+		cache:       caches.NewLimitMemoryCache(-1),
+		secretKeyFn: nil,
 	}
-	if apiSign.cfg.SignValidDuration > 0 && apiSign.cfg.SignValidDuration != defSignValidDuration {
-		defSignValidDuration = apiSign.cfg.SignValidDuration
+	if apiSign.cfg.SignValidDuration > 0 {
+		signTTL = apiSign.cfg.SignValidDuration
 	}
 
 	return apiSign
 }
 
-// Verify sign verify
+// Verify param sign result verify
 func (sign *APISign) Verify(req *http.Request, header string) error {
 	val := req.Header.Get(header)
 	if val == "" {
@@ -104,21 +103,17 @@ func (sign *APISign) Verify(req *http.Request, header string) error {
 			if err != nil {
 				return fmt.Errorf("SortToString %v", err)
 			}
-			if sign.cfg.PathSign {
-				rawStr = req.URL.Path + "?" + bodyStr
-			} else {
-				rawStr = bodyStr
-			}
+			rawStr = bodyStr
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(byt))
 		case "multipart/form-data":
-			rawStr, err = SortParamForm(req, sign.cfg.PathSign)
+			rawStr, err = SortParamForm(req)
 			if err != nil {
 				return err
 			}
 		}
 
 	case http.MethodGet:
-		rawStr, err = SortParamForm(req, sign.cfg.PathSign)
+		rawStr, err = SortParamForm(req)
 		if err != nil {
 			return err
 		}
@@ -152,8 +147,9 @@ func DecodeHeaderVal(headerVal string) (accessKey, signStr, timestamp string, er
 	return accessKey, signStr, timestamp, nil
 }
 
+// SignedValidTime signed TTL verify
 func SignedValidTime(t time.Time) error {
-	if t.Before(time.Now().Add(-defSignValidDuration)) || t.After(time.Now().Add(defSignValidDuration)) {
+	if t.Before(time.Now().Add(-signTTL)) || t.After(time.Now().Add(signTTL)) {
 		return fmt.Errorf("sign timestamp invalid")
 	}
 	return nil
@@ -161,19 +157,18 @@ func SignedValidTime(t time.Time) error {
 
 // SetGetSecretKey setting SecretKey get function
 func (sign *APISign) SetGetSecretKey(f func(accessKey string) (string, error)) {
-	sign.getSecretKey = f
+	sign.secretKeyFn = f
 }
 
-// secretKey
 func (sign *APISign) secretKey(accessKey string) (string, error) {
 	var key string
 	v, err := sign.cache.Get(accessKey)
 	if err != nil {
 		if caches.IsNotFoundErr(err) {
-			if sign.getSecretKey == nil {
-				return "", fmt.Errorf("sign getSecretKey function not init")
+			if sign.secretKeyFn == nil {
+				return "", fmt.Errorf("sign get secretKey function not init")
 			}
-			key, err = sign.getSecretKey(accessKey)
+			key, err = sign.secretKeyFn(accessKey)
 			if err != nil {
 				return "", err
 			}
@@ -188,8 +183,8 @@ func (sign *APISign) secretKey(accessKey string) (string, error) {
 	return "", fmt.Errorf("accessKey invalid")
 }
 
-// SortParamForm URL and form-data param
-func SortParamForm(req *http.Request, path bool) (string, error) {
+// SortParamForm sort and format  URL | form-data param
+func SortParamForm(req *http.Request) (string, error) {
 	resource := ""
 	switch filterFlags(req.Header.Get("Content-Type")) {
 	case "multipart/form-data":
@@ -218,17 +213,10 @@ func SortParamForm(req *http.Request, path bool) (string, error) {
 		resource = strings.Join(query, "&")
 	}
 
-	if path {
-		if len(resource) > 0 {
-			resource = req.URL.Path + "?" + resource
-		} else {
-			resource = req.URL.Path
-		}
-	}
-
 	return resource, nil
 }
 
+// HmacHash hash and encode
 func HmacHash(method Method, rawStr, secretKey string) string {
 	dist := ""
 	switch method {
@@ -260,6 +248,7 @@ func (r RequestBodyMap) GetStringValue(key string) (string, error) {
 	return v, nil
 }
 
+// SortToString request body param sort format
 func (r RequestBodyMap) SortToString(separator string) (string, error) {
 	if len(r) == 0 {
 		return "", nil

@@ -13,7 +13,6 @@ import (
 
 type SignConfig struct {
 	Method    sign.Method
-	PathSign  bool
 	Header    string
 	AccessKey string
 	SecretKey string
@@ -56,7 +55,7 @@ func (c *SignClient) sign(req *http.Request, body []byte) error {
 	ts := fmt.Sprintf("%d", time.Now().Unix())
 	switch req.Method {
 	case http.MethodGet:
-		str, err := sign.SortParamForm(req, c.cfg.PathSign)
+		str, err := sign.SortParamForm(req)
 		if err != nil {
 			return err
 		}
@@ -70,9 +69,6 @@ func (c *SignClient) sign(req *http.Request, body []byte) error {
 			str, err := reqBody.SortToString("&")
 			if err != nil {
 				return err
-			}
-			if c.cfg.PathSign {
-				str = req.URL.Path + "?" + str
 			}
 			rawStr = str + ts
 		}
