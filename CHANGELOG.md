@@ -1,5 +1,6 @@
 ### v0.2.10
 1. Add: httplib req withContext
+2. delete api sign URL PATH func
 ### v0.2.9
 1. inviteCode: Support [base length pad] customization
 ### v0.2.8
