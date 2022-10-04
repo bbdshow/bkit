@@ -229,6 +229,11 @@ func (h *HTTPRequest) SetHeader(key, value string) *HTTPRequest {
 	return h
 }
 
+func (h *HTTPRequest) WithContext(ctx context.Context) *HTTPRequest {
+	h.req.WithContext(ctx)
+	return h
+}
+
 type Params map[string]interface{}
 
 // SetParams json 格式的 struct 直接转换成 k v 字符串， 作为表单提交
