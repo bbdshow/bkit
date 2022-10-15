@@ -61,3 +61,14 @@ func encode(filename string) ([]byte, error) {
 	base64.StdEncoding.Encode(ret, buff)
 	return ret, nil
 }
+
+func TestQiNiuOSS_Get(t *testing.T) {
+	oss := NewQiNiuOSS(ak, sk,
+		domain, bucket)
+	reader, err := oss.Get(context.Background(), "/upload/icon/share.p")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := ioutil.ReadAll(reader)
+	fmt.Println(string(b))
+}
