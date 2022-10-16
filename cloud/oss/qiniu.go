@@ -92,8 +92,9 @@ func (oss *QiNiuOSS) PutToken(expiredSec int, dir string) (token, accessKey, sec
 		scope = fmt.Sprintf("%s:%s", scope, dir)
 	}
 	putPolicy := storage.PutPolicy{
-		Scope:   scope,
-		Expires: uint64(expiredSec),
+		Scope:           scope,
+		IsPrefixalScope: 1,
+		Expires:         uint64(expiredSec),
 	}
 	upToken := putPolicy.UploadToken(auth.New(oss.accessKey, oss.secretKey))
 	return upToken, "", "", nil
