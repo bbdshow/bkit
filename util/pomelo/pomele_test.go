@@ -73,6 +73,12 @@ func TestConnector_Run(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	time.Sleep(5 * time.Minute)
 
+	go func() {
+		time.Sleep(3 * time.Second)
+		if err := c.Notify("auth.GateLogout", b); err != nil {
+			fmt.Println("GateLogout", err)
+		}
+	}()
+	time.Sleep(5 * time.Minute)
 }
