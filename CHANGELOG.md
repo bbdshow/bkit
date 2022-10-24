@@ -1,3 +1,5 @@
+### v0.3.0
+1. Add: pomelo client as tcp test client
 ### v0.2.10
 1. Add: httplib req withContext
 2. delete api sign URL PATH func
