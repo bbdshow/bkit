@@ -18,3 +18,8 @@ func TestWithStack(t *testing.T) {
 func retError() error {
 	return WithStack(fmt.Errorf("1"))
 }
+
+func TestError_MultiMsg(t *testing.T) {
+	msg := ErrNotFound.MultiMsg("arg %d", 1)
+	fmt.Println(msg.Error())
+}

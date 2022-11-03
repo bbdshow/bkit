@@ -1,3 +1,5 @@
+### v0.3.2
+1. Fix: errc Multi.Msg format
 ### v0.3.1
 1. Add: distance calc
 ### v0.3.0
