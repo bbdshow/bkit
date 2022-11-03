@@ -1,3 +1,5 @@
+### v0.3.1
+1. Add: distance calc
 ### v0.3.0
 1. Add: pomelo client as tcp test client
 ### v0.2.10
