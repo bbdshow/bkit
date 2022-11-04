@@ -113,8 +113,8 @@ func (e Error) MultiErr(err error) Error {
 	return e
 }
 
-func (e Error) MultiMsg(format string, v ...interface{}) Error {
-	msg := fmt.Sprintf(format, v...)
+func (e Error) MultiMsg(v ...interface{}) Error {
+	msg := fmt.Sprint(v...)
 	if msg != "" {
 		e.Message += " " + msg
 	}

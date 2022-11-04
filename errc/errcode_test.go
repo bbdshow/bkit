@@ -20,6 +20,6 @@ func retError() error {
 }
 
 func TestError_MultiMsg(t *testing.T) {
-	msg := ErrNotFound.MultiMsg("arg %d", 1)
+	msg := ErrNotFound.MultiMsg("arg ", 1, nil)
 	fmt.Println(msg.Error())
 }
