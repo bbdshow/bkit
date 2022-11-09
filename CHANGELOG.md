@@ -1,3 +1,5 @@
+### v0.3.4
+1. Fix typ.ReqData struct
 ### v0.3.3
 1. Add: typ.Resp for as common results struct
 ### v0.3.2

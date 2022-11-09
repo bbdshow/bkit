@@ -53,12 +53,13 @@ func NewDataResp(baseResp *BaseResp, data interface{}) *DataResp {
 }
 
 type ReqData struct {
-	TraceId  types.TraceID
-	Route    string
-	CallFunc string
-	ClientIP string
-	Body     string
-	Error    string
+	traceId     types.TraceID
+	Route       string
+	RemoteAddr  string
+	Uid         string
+	Body        string
+	Msg         string // 补充信息
+	InternalErr string
 }
 
 func SetReqDataContext(ctx context.Context, data ReqData) context.Context {
@@ -81,7 +82,7 @@ func Resp(data interface{}, err error, ctx ...context.Context) *DataResp {
 	if len(ctx) > 0 {
 		c := ctx[0]
 		reqData = GetReqDataContext(c)
-		reqData.TraceId = logs.Qezap.TraceID(c)
+		reqData.traceId = logs.Qezap.TraceID(c)
 	}
 	code := errc.Success
 	message := errc.GetMessage(code)
@@ -95,19 +96,18 @@ func Resp(data interface{}, err error, ctx ...context.Context) *DataResp {
 		}
 		switch code {
 		case errc.InternalErr:
-			reqData.Error = message
+			reqData.InternalErr = message
 			logs.Qezap.Error("InternalException", zap.Any("reqData", reqData),
 				logs.Qezap.ConditionOne(reqData.Route),
-				logs.Qezap.ConditionTwo(reqData.CallFunc),
-				logs.Qezap.ConditionThree(reqData.ClientIP),
-				zap.String(types.EncoderTraceIDKey, reqData.TraceId.Hex()),
-				zap.String("latency", time.Now().Sub(reqData.TraceId.Time()).String()))
+				logs.Qezap.ConditionTwo(reqData.Uid),
+				zap.String(types.EncoderTraceIDKey, reqData.traceId.Hex()),
+				zap.String("latency", time.Now().Sub(reqData.traceId.Time()).String()))
 			// hide system error
 			message = errc.GetMessage(code)
 		}
 	}
 	baseResp := NewBaseResp(code, message)
-	baseResp.TraceID = reqData.TraceId.Hex()
+	baseResp.TraceID = reqData.traceId.Hex()
 	out := NewDataResp(baseResp, data)
 	return out
 }
