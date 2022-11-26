@@ -1,3 +1,5 @@
+### 
+1. Add SliceRemoveDuplicate
 ### v0.3.4
 1. Fix typ.ReqData struct
 ### v0.3.3
