@@ -17,8 +17,8 @@ func SetBase(b string) {
 	if len(b) <= 0 {
 		return
 	}
-	decimal = len(base)
 	base = b
+	decimal = len(base)
 }
 
 func SetPad(p string) error {
