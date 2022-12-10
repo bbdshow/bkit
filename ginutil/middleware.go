@@ -156,7 +156,7 @@ func ReqLogger(skipPaths ...string) gin.HandlerFunc {
 // RecoveryLogger GIN Recovery logging to qelog
 func RecoveryLogger() gin.HandlerFunc {
 	if logs.Qezap != nil {
-		return gin.RecoveryWithWriter(logs.Qezap.NewWriter(zap.ErrorLevel, "GIN-ERROR"))
+		return gin.RecoveryWithWriter(logs.Qezap.NewLevelWriter(zap.ErrorLevel, "GIN-ERROR"))
 	}
 	return gin.Recovery()
 }
