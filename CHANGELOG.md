@@ -1,3 +1,5 @@
+### v0.3.6
+1. upgrade qezap client
 ### v0.3.5
 1. Add SliceRemoveDuplicate
 2. Fix:bug inviter.SetBase

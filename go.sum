@@ -24,6 +24,8 @@ github.com/bbdshow/qelog/api v1.0.1 h1:4GYKc61Jis08eeZKTXSD6CKUbT2nmqHraQ/nX+g59
 github.com/bbdshow/qelog/api v1.0.1/go.mod h1:pRSYjL2jl+96/n/WVOHagochbRBHavyF8pylqIm6QWc=
 github.com/bbdshow/qelog/qezap v1.0.3 h1:F19TcStPI9QlHD678/HkJuGxAkdJ2v6elm++2GPHcYY=
 github.com/bbdshow/qelog/qezap v1.0.3/go.mod h1:72EmMdkqeK0oo/QSbher+jBpKh9py58oiLaaBBIOR9A=
+github.com/bbdshow/qelog/qezap v1.1.0 h1:g8kNo107SdkTSU+dHVfJ8el8gPtV9azMvykOH66VZ4U=
+github.com/bbdshow/qelog/qezap v1.1.0/go.mod h1:72EmMdkqeK0oo/QSbher+jBpKh9py58oiLaaBBIOR9A=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=

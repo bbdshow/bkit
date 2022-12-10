@@ -2,7 +2,6 @@ package logs
 
 import (
 	"github.com/bbdshow/qelog/qezap"
-	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -11,7 +10,7 @@ var Qezap *qezap.Logger
 
 func init() {
 	// init local Log，not support remote write
-	Qezap = qezap.New(qezap.NewConfig(nil, ""), zap.DebugLevel)
+	Qezap = qezap.New()
 }
 
 type Config struct {
@@ -23,5 +22,8 @@ type Config struct {
 
 func InitQezap(cfg *Config) {
 	_ = Qezap.Close()
-	Qezap = qezap.New(qezap.NewConfig(cfg.Addr, cfg.Module).SetFilename(cfg.Filename), zapcore.Level(cfg.Level))
+	Qezap = qezap.New(
+		qezap.WithFilename(cfg.Filename),
+		qezap.WithAddrsAndModuleName(cfg.Addr, cfg.Module),
+		qezap.WithLevel(zapcore.Level(cfg.Level)))
 }
