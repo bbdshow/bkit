@@ -1,3 +1,5 @@
+### v0.3.7
+1. add str function
 ### v0.3.6
 1. upgrade qezap client
 ### v0.3.5
