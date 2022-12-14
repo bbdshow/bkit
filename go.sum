@@ -20,12 +20,10 @@ github.com/andybalholm/cascadia v1.0.0/go.mod h1:GsXiBklL0woXo1j/WYWtSYYC4ouU9Pq
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/aokoli/goutils v1.0.1 h1:7fpzNGoJ3VA8qcrm++XEE1QUe0mIwNeLa02Nwq7RDkg=
 github.com/aokoli/goutils v1.0.1/go.mod h1:SijmP0QR8LtwsmDs8Yii5Z/S4trXFGFC2oO5g9DP+DQ=
-github.com/bbdshow/qelog/api v1.0.1 h1:4GYKc61Jis08eeZKTXSD6CKUbT2nmqHraQ/nX+g59qo=
-github.com/bbdshow/qelog/api v1.0.1/go.mod h1:pRSYjL2jl+96/n/WVOHagochbRBHavyF8pylqIm6QWc=
-github.com/bbdshow/qelog/qezap v1.0.3 h1:F19TcStPI9QlHD678/HkJuGxAkdJ2v6elm++2GPHcYY=
-github.com/bbdshow/qelog/qezap v1.0.3/go.mod h1:72EmMdkqeK0oo/QSbher+jBpKh9py58oiLaaBBIOR9A=
-github.com/bbdshow/qelog/qezap v1.1.0 h1:g8kNo107SdkTSU+dHVfJ8el8gPtV9azMvykOH66VZ4U=
-github.com/bbdshow/qelog/qezap v1.1.0/go.mod h1:72EmMdkqeK0oo/QSbher+jBpKh9py58oiLaaBBIOR9A=
+github.com/bbdshow/qelog/api v1.1.0 h1:fNTPVBIzSrFsI18meBPTFmeluw3RZHTkVm/+15UBh20=
+github.com/bbdshow/qelog/api v1.1.0/go.mod h1:pRSYjL2jl+96/n/WVOHagochbRBHavyF8pylqIm6QWc=
+github.com/bbdshow/qelog/qezap v1.1.1 h1:fT0PTDoWIQALUv8QZishoImUwU7rA1y/ZPgLBGYxjWY=
+github.com/bbdshow/qelog/qezap v1.1.1/go.mod h1:MYb9ntWEqzP0N2+QtRqYzbTNYfOk+CWHTnZiMzLFLzk=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
