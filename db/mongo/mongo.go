@@ -87,8 +87,6 @@ func (db *Database) Find(ctx context.Context, collection string, filter bson.M, 
 	if err != nil {
 		return err
 	}
-	defer cursor.Close(ctx)
-
 	if err := cursor.All(ctx, docs); err != nil {
 		return err
 	}
@@ -104,7 +102,6 @@ func (db *Database) FindCount(ctx context.Context, collection string, filter int
 	if err != nil {
 		return 0, err
 	}
-	defer cursor.Close(ctx)
 	if err := cursor.All(ctx, docs); err != nil {
 		return 0, err
 	}
