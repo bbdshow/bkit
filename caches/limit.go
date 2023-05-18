@@ -3,7 +3,7 @@ package caches
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -80,8 +80,14 @@ func (val *IValue) Expired(now int64) bool {
 
 func (m *LimitMemoryCache) Get(key string) (interface{}, error) {
 	m.rwMutex.RLock()
-	iVal, ok := m.store[key]
+	v, err := m.get(key)
 	m.rwMutex.RUnlock()
+	return v, err
+}
+
+// goroutine not safety
+func (m *LimitMemoryCache) get(key string) (interface{}, error) {
+	iVal, ok := m.store[key]
 	if ok {
 		// if expired, just del
 		if iVal.Expired(time.Now().Unix()) {
@@ -91,6 +97,21 @@ func (m *LimitMemoryCache) Get(key string) (interface{}, error) {
 		return iVal.Value, nil
 	}
 	return nil, ErrNotFound
+}
+
+func (m *LimitMemoryCache) Range(f func(key string, value interface{}) bool) {
+	m.rwMutex.RLock()
+	defer m.rwMutex.RUnlock()
+
+	for k := range m.store {
+		v, err := m.get(k)
+		if err == nil {
+			next := f(k, v)
+			if !next {
+				return
+			}
+		}
+	}
 }
 
 func (m *LimitMemoryCache) SetWithTTL(key string, value interface{}, ttl time.Duration) error {
@@ -272,7 +293,7 @@ type Disk struct {
 	filename string
 }
 
-//  NewDisk  filename
+// NewDisk  filename
 func NewDisk(filename string) (*Disk, error) {
 
 	f, err := filepath.Abs(filename)
@@ -327,7 +348,7 @@ func (d *Disk) ReadFromFile() ([]byte, error) {
 	}
 	defer file.Close()
 
-	data, err = ioutil.ReadAll(file)
+	data, err = io.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +356,7 @@ func (d *Disk) ReadFromFile() ([]byte, error) {
 	return data, nil
 }
 
-// GetCurrentDir
+// GetCurrentDir -
 func GetCurrentDir() (string, error) {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0])) // absolution filepath.Dir(os.Args[0])
 	if err != nil {

@@ -1,6 +1,7 @@
 package caches
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -52,4 +53,24 @@ func TestNewLRUMemory(t *testing.T) {
 
 		i++
 	}
+}
+
+func TestLRUMemory_Range(t *testing.T) {
+	lru := NewLRUMemory(100)
+	for i := 0; i < 110; i++ {
+		_ = lru.Set(fmt.Sprintf("%d", i), i)
+	}
+	c := 0
+	go func() {
+		for i := 0; i < 11000000; i++ {
+			_ = lru.Set(fmt.Sprintf("%d", i), i)
+		}
+	}()
+	time.Sleep(1 * time.Millisecond)
+	lru.Range(func(key string, value interface{}) bool {
+		fmt.Println(key, value)
+		c++
+		return true
+	})
+	fmt.Println(c)
 }

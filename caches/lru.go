@@ -49,21 +49,16 @@ func (m *LRUCache) runGC() {
 	}()
 }
 
-//  if storage not enough, del little visit
+// GC if storage not enough, del little visit
 func (m *LRUCache) GC() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
+	_ = m.delAllExpiredKey()
+
 	if m.eleList.Len() < m.MaxElement {
 		return
 	}
 	removedNum := 0
-	// precedence del ttlKey
-	for removedNum < CacheGcMaxRemoved {
-		if !m.delTTLKey() {
-			break
-		}
-		removedNum++
-	}
 	for removedNum < CacheGcMaxRemoved {
 		if !m.delFrontKey() {
 			break
@@ -74,7 +69,13 @@ func (m *LRUCache) GC() {
 
 func (m *LRUCache) Get(key string) (interface{}, error) {
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
+	v, err := m.get(key, false)
+	m.mutex.Unlock()
+	return v, err
+}
+
+// goroutine not safety
+func (m *LRUCache) get(key string, isRange bool) (interface{}, error) {
 	if ele, ok := m.eleIndex[key]; ok {
 		n := ele.Value.(*iNode)
 		if n.Expired(time.Now().Unix()) {
@@ -85,8 +86,11 @@ func (m *LRUCache) Get(key string) (interface{}, error) {
 			return nil, ErrNotFound
 		}
 		// if visit, move to end, not GC
-		n.lastVisit = time.Now()
-		m.eleList.MoveToBack(ele)
+		// if isRange , not change visit state
+		if !isRange {
+			n.lastVisit = time.Now()
+			m.eleList.MoveToBack(ele)
+		}
 		return m.store.Get(key)
 	}
 	return nil, ErrNotFound
@@ -114,7 +118,8 @@ func (m *LRUCache) SetWithTTL(key string, val interface{}, ttl time.Duration) er
 	_ = m.store.Set(key, val)
 
 	if m.eleList.Len() > m.MaxElement {
-		if !m.delTTLKey() {
+		delCount := m.delAllExpiredKey()
+		if delCount <= 0 {
 			// if without ttl key, just front key
 			m.delFrontKey()
 		}
@@ -122,7 +127,24 @@ func (m *LRUCache) SetWithTTL(key string, val interface{}, ttl time.Duration) er
 	return nil
 }
 
-func (m *LRUCache) delTTLKey() bool {
+func (m *LRUCache) Range(f func(key string, value interface{}) bool) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	for k := range m.eleIndex {
+		v, err := m.get(k, true)
+		if err == nil {
+			next := f(k, v)
+			if !next {
+				return
+			}
+		}
+	}
+}
+
+// delete all expired key
+func (m *LRUCache) delAllExpiredKey() int {
+	delCount := 0
 	now := time.Now().Unix()
 	for ele := m.eleList.Front(); ele != nil; {
 		n := ele.Value.(*iNode)
@@ -130,11 +152,11 @@ func (m *LRUCache) delTTLKey() bool {
 			m.eleList.Remove(ele)
 			delete(m.eleIndex, n.key)
 			_ = m.store.Del(n.key)
-			return true
+			delCount++
 		}
 		ele = ele.Next()
 	}
-	return false
+	return delCount
 }
 
 func (m *LRUCache) delFrontKey() bool {

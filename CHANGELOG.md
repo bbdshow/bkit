@@ -1,4 +1,5 @@
 ### v0.3.8
+1.feat: add cacher range function , fix delAllExpiredKey
 ### v0.3.7
 1. add str function
 ### v0.3.6

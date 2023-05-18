@@ -24,8 +24,11 @@ func IsNotFoundErr(err error) bool {
 
 type Cacher interface {
 	Get(key string) (interface{}, error)
+	Range(f func(key string, value interface{}) bool) // Range Locks will be added. Watch for deadlocks
+
 	Set(key string, value interface{}) error
 	SetWithTTL(key string, value interface{}, ttl time.Duration) error
+
 	Del(key string) error
 
 	Close() error
