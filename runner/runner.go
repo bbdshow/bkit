@@ -3,12 +3,12 @@ package runner
 import (
 	"context"
 	"fmt"
-	"github.com/bbdshow/bkit/errc"
-	"github.com/bbdshow/bkit/gen/defval"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/bbdshow/bkit/errc"
 )
 
 type Server interface {
@@ -69,16 +69,23 @@ func (opt optionFunc) apply(config *Config) {
 }
 
 type Config struct {
-	ListenAddr   string        `defval:"0.0.0.0:8080"` // host:port
-	ReadTimeout  time.Duration `defval:"10m"`
-	WriteTimeout time.Duration `defval:"10m"`
+	ListenAddr   string
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
 	Context      context.Context
 }
 
 func (c *Config) Init() *Config {
-	if err := defval.ParseDefaultVal(c); err != nil {
-		panic(err)
+	if c.ListenAddr == "" {
+		c.ListenAddr = ":8080"
 	}
+	if c.ReadTimeout == 0 {
+		c.ReadTimeout = 10 * time.Minute
+	}
+	if c.WriteTimeout == 0 {
+		c.WriteTimeout = 10 * time.Minute
+	}
+
 	if c.Context == nil {
 		c.Context = context.Background()
 	}

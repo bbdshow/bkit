@@ -1,4 +1,4 @@
-package defval
+package conf
 
 import (
 	"fmt"

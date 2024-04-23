@@ -2,8 +2,9 @@ package openid
 
 import (
 	"fmt"
-	"github.com/bbdshow/bkit/gen/invitecode"
-	"github.com/bbdshow/bkit/gen/str"
+
+	"github.com/bbdshow/bkit/typ"
+	"github.com/bbdshow/bkit/typ/invitecode"
 )
 
 type OpenId string
@@ -12,7 +13,7 @@ type OpenId string
 func (id OpenId) Init(uid int64, chanNo string) OpenId {
 	u := invitecode.Encode(uint64(uid))
 	// 填充字符串放入基数索引位
-	fullStr := str.RandAlphaNumString(28)
+	fullStr := typ.RandAlphaNumString(28)
 	uc := u + chanNo
 	index := 0
 	openId := ""

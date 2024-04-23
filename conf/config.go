@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/bbdshow/bkit/gen/defval"
 	ptoml "github.com/pelletier/go-toml"
 	"gopkg.in/yaml.v3"
 )
@@ -30,7 +29,7 @@ func FlagConfigPath(path ...string) string {
 
 // PrintJSON  print JSON string,  null tag, will hide
 func PrintJSON(config interface{}) (string, error) {
-	if err := defval.InitialNullVal(config); err != nil {
+	if err := InitialNullVal(config); err != nil {
 		return "", err
 	}
 	byts, err := json.MarshalIndent(config, "", "  ")
@@ -70,7 +69,7 @@ func filenameSplit(filename string) (dir, file, typ string) {
 
 // UnmarshalDefaultVal struct, 'defval' tag to default value
 func UnmarshalDefaultVal(config interface{}) error {
-	return defval.ParseDefaultVal(config)
+	return ParseDefaultVal(config)
 }
 
 // MarshalToFile struct to file

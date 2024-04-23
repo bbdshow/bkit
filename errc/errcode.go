@@ -7,10 +7,10 @@ import (
 
 // -1--999 system common error code
 const (
-	Failed  = -1
+	Failed  = 1
 	Success = 0
 
-	InternalErr = 1
+	InternalErr = 2
 
 	AuthInternalErr      = 10
 	AuthRequired         = 11
