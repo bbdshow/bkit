@@ -1,4 +1,7 @@
 # bkit
+## WARNING
+This project is still in development and is not ready for production use. **private project, please do not use it**
+
 develop project common kit library
 
 ### 关于 go get
