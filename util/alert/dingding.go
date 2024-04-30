@@ -20,6 +20,8 @@ func NewDingDing() *DingDing {
 		client: &http.Client{},
 	}
 }
+func (dd *DingDing) SetProxy(proxy string) {
+}
 
 // SetHookURL set RequestURL eg: https://oapi.dingtalk.com/robot/send?access_token=xxxxx
 func (dd *DingDing) SetHookURL(url string) {

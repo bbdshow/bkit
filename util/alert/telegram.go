@@ -36,6 +36,18 @@ func (tel *Telegram) SetHookURL(_url string) {
 		tel.hookURL = _url
 	}
 }
+func (tel *Telegram) SetProxy(proxy string) {
+	if proxy != "" {
+		_url, err := url.Parse(proxy)
+		if err == nil {
+			tel.client.Transport = &http.Transport{
+				Proxy: http.ProxyURL(_url),
+			}
+		} else {
+			fmt.Println("proxy url invalid")
+		}
+	}
+}
 
 // Send text message
 func (tel *Telegram) Send(ctx context.Context, content string) error {
