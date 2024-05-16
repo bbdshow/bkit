@@ -230,7 +230,7 @@ func (h *HTTPRequest) SetHeader(key, value string) *HTTPRequest {
 }
 
 func (h *HTTPRequest) WithContext(ctx context.Context) *HTTPRequest {
-	h.req.WithContext(ctx)
+	h.req = h.req.WithContext(ctx)
 	return h
 }
 
@@ -249,7 +249,9 @@ func (h *HTTPRequest) SetParams(v interface{}) (*HTTPRequest, error) {
 	}
 
 	for k, v := range params {
-		h.SetParam(k, fmt.Sprint(v))
+		if v != nil {
+			h.SetParam(k, fmt.Sprint(v))
+		}
 	}
 
 	return h, nil
@@ -265,8 +267,8 @@ func (h *HTTPRequest) SetParam(key, value string) *HTTPRequest {
 	return h
 }
 
-func (h *HTTPRequest) PostFile(fieldname, filename string) *HTTPRequest {
-	h.files[fieldname] = filename
+func (h *HTTPRequest) PostFile(key, filename string) *HTTPRequest {
+	h.files[key] = filename
 	return h
 }
 
@@ -540,7 +542,6 @@ func (h *HTTPRequest) DoRequest() (resp *http.Response, err error) {
 
 // 拼装请求参数
 func (h *HTTPRequest) buildURL(paramBody string) {
-
 	// GET 方法，拼接 URL
 	if h.req.Method == "GET" && len(paramBody) > 0 {
 		if strings.Contains(h.url, "?") {
@@ -557,8 +558,8 @@ func (h *HTTPRequest) buildURL(paramBody string) {
 			pr, pw := io.Pipe()
 			bodyWriter := multipart.NewWriter(pw)
 			go func() {
-				for fieldname, filename := range h.files {
-					fileWriter, err := bodyWriter.CreateFormFile(fieldname, filename)
+				for key, filename := range h.files {
+					fileWriter, err := bodyWriter.CreateFormFile(key, filename)
 					if err != nil {
 						log.Println("httplib: ", err)
 					}
@@ -601,8 +602,8 @@ func (h *HTTPRequest) buildURL(paramBody string) {
 }
 
 func TimeoutDialer(cTimeout, rwTimeout time.Duration) func(net, addr string) (c net.Conn, err error) {
-	return func(netw, addr string) (net.Conn, error) {
-		conn, err := net.DialTimeout(netw, addr, cTimeout)
+	return func(network, addr string) (net.Conn, error) {
+		conn, err := net.DialTimeout(network, addr, cTimeout)
 		if err != nil {
 			return nil, err
 		}
