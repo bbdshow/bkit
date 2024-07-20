@@ -1,22 +1,21 @@
-# bkit
-## WARNING
-This project is still in development and is not ready for production use. **private project, please do not use it**
+# bkit 工具函数库
+## 注意
+- 本工具函数库是为了方便开发者快速开发而设计的，为私人使用，不保证稳定性。
+- v2 版本与 v1 不兼容，版本最大的区别是：v2 版本将工具函数库拆分成多个子文件实现的 XXXUtil结构体。方便直接复制文件引入到本地项目使用。
 
-develop project common kit library
+## 使用
+目前使用 v2 版本， v1 版本不维护，如有之前有引用，可切换到 v1 分支。
 
-### 关于 go get
+### 安装
+```shell
+ go get -u github.com/bbdshow/bkit.v2
+```
+### 单文件复制
 
-#### 只使用 bkit
-> go get github.com/bbdshow/bkit
 
-#### 使用 mysql
-> go get github.com/bbdshow/bkit/db/mysql
 
-#### 使用 mongo
-> go get github.com/bbdshow/bkit/db/mongo
+## 规则
+XXUtil 为工具函数库，提供一些常用的工具函数，如字符串处理、时间处理、文件处理等。
 
-#### 使用 redis
-> go get github.com/bbdshow/bkit/db/redis
-
-#### 使用 云服务相关
-> go get github.com/bbdshow/bkit/cloud
+针对默认初始化命名: 如果一个工具函数库是  TimeUtil 那么它的初始化定义就是 Time， 去掉后面的Util。大多数情况下，都保持这个规则。
+使用示例  bkit.Time.XX()。  XX() 就是TimeUtil结构体中的一个方法。
