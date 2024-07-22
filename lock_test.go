@@ -15,31 +15,35 @@ func TestMysqlDistributedLocker(t *testing.T) {
 	}
 
 	key := "test_key"
-	ok, err := lock.AcquireLock(key, 10*time.Second)
-	if err != nil {
-		t.Fatal(err)
+	if err := lock.AcquireLock(key, 5*time.Second); err != nil {
+		if err != ErrAcquireLockFailed {
+			t.Fatal(err)
+		}
+		if err == ErrAcquireLockFailed {
+			t.Fatal("AcquireLock failed")
+		}
 	}
-	if !ok {
-		t.Fatal("AcquireLock failed")
-	}
+
 	lock2, err := NewMysqlDistributedLocker(dsn, "owner_2")
 	if err != nil {
 		t.Fatal(err)
 	}
-	ok, err = lock2.AcquireLock(key, 10*time.Second)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if ok {
+	if err = lock2.AcquireLock(key, 5*time.Second); err != nil {
+		if err != ErrAcquireLockFailed {
+			t.Fatal(err)
+		}
+
+	} else {
 		t.Fatal("AcquireLock 不应该获取到锁")
 	}
 
-	time.Sleep(25 * time.Second)
-	ok, err = lock2.AcquireLock(key, 10*time.Second)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !ok {
-		t.Fatal("AcquireLock 应该获取到锁")
+	time.Sleep(10 * time.Second)
+	if err = lock2.AcquireLock(key, 5*time.Second); err != nil {
+		if err != ErrAcquireLockFailed {
+			t.Fatal(err)
+		}
+		if err == ErrAcquireLockFailed {
+			t.Fatal("AcquireLock 应该获取到锁")
+		}
 	}
 }

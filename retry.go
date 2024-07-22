@@ -7,7 +7,7 @@ var Retry = RetryUtil{}
 type RetryUtil struct{}
 
 // RetryN 重试 n 次, sleep 为每次重试的间隔, n = 1 时不重试
-func (RetryUtil) RetryN(fn func() error, n int, sleep time.Duration) error {
+func (RetryUtil) RetryN(n int, sleep time.Duration, fn func() error) error {
 	if n <= 0 {
 		n = 1
 	}

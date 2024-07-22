@@ -9,9 +9,17 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+var ErrAcquireLockFailed = fmt.Errorf("acquire lock failed")
+
 type DistributedLocker interface {
-	AcquireLock(name string, ttl time.Duration) (bool, error)
+	// AcquireLock 加锁 err: nil 取锁成功，ErrAcquireLock 时表示获取锁失败， 其他错误表示获取锁时发生错误，一般是IO错误
+	AcquireLock(name string, ttl time.Duration) error
+	// ReleaseLock 释放锁
 	ReleaseLock(name string) error
+	// ReleaseAllLocks 释放所有锁
+	ReleaseAllLocks() error
+	// Close 关闭, 释放资源
+	Close() error
 }
 
 type _distributedLock struct {
@@ -63,8 +71,8 @@ func (lock *MysqlDistributedLocker) Close() error {
 	return lock.db.Close()
 }
 
-// Lock 加锁
-func (lock *MysqlDistributedLocker) AcquireLock(name string, ttl time.Duration) (bool, error) {
+// AcquireLock 加锁
+func (lock *MysqlDistributedLocker) AcquireLock(name string, ttl time.Duration) error {
 	if ttl < time.Second {
 		ttl = time.Second
 	}
@@ -74,17 +82,25 @@ func (lock *MysqlDistributedLocker) AcquireLock(name string, ttl time.Duration) 
 	//  先本地判断是否已经加锁
 	if v, ok := lock.m[name]; ok {
 		if v.Expire.After(time.Now()) {
-			return true, nil
+			return nil
 		}
 		// 过期了, 删除
 		delete(lock.m, name)
 	}
 	expire := time.Now().Add(ttl)
 	// 本地没有, 则去数据库获取锁
-	ok, err := lock.tryAcquireLock(name, expire)
-	if err != nil {
-		return false, err
-	}
+	var (
+		ok  bool
+		err error
+	)
+
+	Retry.RetryN(2, time.Second, func() error {
+		ok, err = lock.tryAcquireLock(name, expire)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 
 	if ok {
 		lock.m[name] = _distributedLock{
@@ -93,9 +109,11 @@ func (lock *MysqlDistributedLocker) AcquireLock(name string, ttl time.Duration) 
 			Expire:    expire,
 			CreatedAt: time.Now(),
 		}
+		return nil
 	}
-	return ok, nil
+	return ErrAcquireLockFailed
 }
+
 func (lock *MysqlDistributedLocker) tryAcquireLock(name string, expire time.Time) (bool, error) {
 	result, err := lock.db.Exec(fmt.Sprintf(`
 	INSERT INTO %s (lock_name, owner, expire, created_at)
@@ -116,6 +134,7 @@ func (lock *MysqlDistributedLocker) tryAcquireLock(name string, expire time.Time
 	return affected != 0, nil
 }
 
+// ReleaseLock 释放锁
 func (lock *MysqlDistributedLocker) ReleaseLock(key string) error {
 	lock.mutex.Lock()
 	defer lock.mutex.Unlock()
@@ -123,9 +142,12 @@ func (lock *MysqlDistributedLocker) ReleaseLock(key string) error {
 	if _, ok := lock.m[key]; !ok {
 		return fmt.Errorf("%s lock not found", lock.owner)
 	}
-
 	// 存在, 则删除
-	err := lock.tryRelease(lock.m[key])
+	var err error
+	Retry.RetryN(2, time.Second, func() error {
+		err = lock.tryRelease(lock.m[key])
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -133,8 +155,22 @@ func (lock *MysqlDistributedLocker) ReleaseLock(key string) error {
 
 	return nil
 }
-
 func (lock *MysqlDistributedLocker) tryRelease(v _distributedLock) error {
 	_, err := lock.db.Exec(fmt.Sprintf("DELETE FROM %s WHERE lock_name = ? AND owner = ?", lock.tableName), v.LockName, lock.owner)
 	return err
+}
+
+// ReleaseAllLocks 释放所有锁
+func (lock *MysqlDistributedLocker) ReleaseAllLocks() error {
+	lock.mutex.Lock()
+	defer lock.mutex.Unlock()
+
+	for _, v := range lock.m {
+		err := lock.tryRelease(v)
+		if err != nil {
+			return err
+		}
+	}
+	lock.m = make(map[string]_distributedLock)
+	return nil
 }
