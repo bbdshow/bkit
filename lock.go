@@ -94,7 +94,7 @@ func (lock *MysqlDistributedLocker) AcquireLock(name string, ttl time.Duration) 
 		err error
 	)
 
-	Retry.RetryN(2, time.Second, func() error {
+	Retry.RetryN(1, time.Second, func() error {
 		ok, err = lock.tryAcquireLock(name, expire)
 		if err != nil {
 			return err
@@ -144,7 +144,7 @@ func (lock *MysqlDistributedLocker) ReleaseLock(key string) error {
 	}
 	// 存在, 则删除
 	var err error
-	Retry.RetryN(2, time.Second, func() error {
+	Retry.RetryN(1, time.Second, func() error {
 		err = lock.tryRelease(lock.m[key])
 		return err
 	})

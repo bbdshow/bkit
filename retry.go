@@ -6,13 +6,11 @@ var Retry = RetryUtil{}
 
 type RetryUtil struct{}
 
-// RetryN 重试 n 次, sleep 为每次重试的间隔, n = 1 时不重试
-func (RetryUtil) RetryN(n int, sleep time.Duration, fn func() error) error {
-	if n <= 0 {
-		n = 1
-	}
+// RetryN 重试 n 次, 至少执行一次, sleep 为每次重试的间隔, n = 1, 重试1次， 共执行2次
+func (RetryUtil) RetryN(n uint, sleep time.Duration, fn func() error) error {
 	var err error
-	for i := 0; i < n; i++ {
+	// i<=n 至少执行一次
+	for i := uint(0); i <= n; i++ {
 		err = fn()
 		if err == nil {
 			break
