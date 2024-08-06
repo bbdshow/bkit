@@ -44,14 +44,14 @@ func (mc *MysqlConf) Validate() error {
 }
 
 // GenDSN -
-func (mc *MysqlConf) GenDSN() string {
+func (mc *MysqlConf) DataSourceName() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		mc.User, mc.Password, mc.Host, mc.Port, mc.Database)
 }
 
 // NewGormWithMysql 初始化 Mysql GORM DB
 func NewGormWithMysql(mc MysqlConf) (*gorm.DB, error) {
-	sqlDB, err := sql.Open("mysql", mc.GenDSN())
+	sqlDB, err := sql.Open("mysql", mc.DataSourceName())
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +70,8 @@ func NewGormWithMysql(mc MysqlConf) (*gorm.DB, error) {
 	return db, err
 }
 
-// CloseGORMDB -
-func CloseGORMDB(db *gorm.DB) error {
+// CloseGormDB -
+func CloseGormDB(db *gorm.DB) error {
 	sqlDB, err := db.DB()
 	if err != nil {
 		log.Println("close gorm db error: ", err)
