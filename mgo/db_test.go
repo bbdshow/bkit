@@ -22,8 +22,8 @@ type doc struct {
 	Value string `bson:"value"`
 }
 
-func TestDatabase_UpsertCollectionIndexMany(t *testing.T) {
-	db, err := NewDatabase(context.Background(), uri, database)
+func TestDatabase_CreateIndexes(t *testing.T) {
+	db, err := NewDatabase(context.Background(), DBConn{URI: uri, Database: database})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,10 +38,9 @@ func TestDatabase_UpsertCollectionIndexMany(t *testing.T) {
 			Name:       "name_value",
 			Keys:       bson.D{{Key: "name", Value: 1}, {Key: "value", Value: -1}},
 			Unique:     true,
-			Background: true,
 		}}
 
-	err = db.UpsertCollectionIndexMany(manyIndex)
+	err = db.CreateIndexes(manyIndex)
 	if err != nil {
 		t.Fatal(err)
 		return
@@ -72,25 +71,50 @@ next:
 func TestDatabase_Transaction(t *testing.T) {
 	database := "tx_test"
 	uri := "mongodb://root:111111@192.168.10.25:27017,192.168.10.26:27017/?authSource=admin$replicaSet=fbj&authSource=admin&maxPoolSize=50"
-	db, err := NewDatabase(context.Background(), uri, database)
+	db, err := NewDatabase(context.Background(), DBConn{URI: uri, Database: database})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = db.Transaction(context.Background(), func(sessCtx SessionContext) error {
+	err = db.Transaction(context.Background(), func(session SessionContext) error {
 		type r struct {
 			Name string    `bson:"name"`
 			At   time.Time `bson:"at"`
 		}
-		iRet, err := db.Collection("tx").InsertOne(sessCtx, &r{Name: "tx_key", At: time.Now()})
+		iRet, err := db.Collection("tx").InsertOne(session, &r{Name: "tx_key", At: time.Now()})
 		if err != nil {
 			return err
 		}
 		log.Println(iRet)
 		return fmt.Errorf("exception")
-		return nil
 	})
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+type tableA struct {
+	Name string `bson:"name"`
+}
+
+func (*tableA) TableName() string {
+	return "table_a"
+}
+
+type tableB struct {
+	Name string `bson:"name"`
+}
+
+func (tableB) TableName() string {
+	return "table_b"
+}
+func TestDatabase_collectionName(t *testing.T) {
+	tableA := &tableA{}
+	tableB := tableB{}
+	if CollectionName(tableA) != "table_a" {
+		t.Fail()
+	}
+	if CollectionName(&tableB) != "table_b" {
+		t.Fail()
 	}
 }

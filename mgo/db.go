@@ -2,12 +2,11 @@ package mgo
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"reflect"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,40 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-type DataBaseInterface interface {
-	// 自定义快捷方法
-
-	Exists(ctx context.Context, collection string, filter interface{}) (bool, error)
-	FindOne(ctx context.Context, collection string, filter interface{}, doc interface{}, opt ...*options.FindOneOptions) (bool, error)
-	Find(ctx context.Context, collection string, filter bson.M, docs interface{}, opt ...*options.FindOptions) error
-	FindCount(ctx context.Context, collection string, filter interface{}, docs interface{}, findOpt *options.FindOptions, countOpt *options.CountOptions) (int64, error)
-	ListCollectionNames(ctx context.Context, prefix ...string) ([]string, error)
-	UpsertCollectionIndexMany(indexMany ...[]Index) error
-	Transaction(ctx context.Context, tx func(session SessionContext) error) error
-
-	// 原始方法
-
-	Client() *mongo.Client
-	Name() string
-	Collection(name string, opts ...*options.CollectionOptions) *mongo.Collection
-	Aggregate(ctx context.Context, pipeline interface{},
-		opts ...*options.AggregateOptions) (*mongo.Cursor, error)
-	RunCommand(ctx context.Context, runCommand interface{}, opts ...*options.RunCmdOptions) *mongo.SingleResult
-	RunCommandCursor(ctx context.Context, runCommand interface{}, opts ...*options.RunCmdOptions) (*mongo.Cursor, error)
-	Drop(ctx context.Context) error
-	ListCollectionSpecifications(ctx context.Context, filter interface{},
-		opts ...*options.ListCollectionsOptions) ([]*mongo.CollectionSpecification, error)
-	ListCollections(ctx context.Context, filter interface{}, opts ...*options.ListCollectionsOptions) (*mongo.Cursor, error)
-	ReadConcern() *readconcern.ReadConcern
-	ReadPreference() *readpref.ReadPref
-	WriteConcern() *writeconcern.WriteConcern
-	Watch(ctx context.Context, pipeline interface{},
-		opts ...*options.ChangeStreamOptions) (*mongo.ChangeStream, error)
-	CreateCollection(ctx context.Context, name string, opts ...*options.CreateCollectionOptions) error
-	CreateView(ctx context.Context, viewName, viewOn string, pipeline interface{},
-		opts ...*options.CreateViewOptions) error
-}
 
 type SessionContext mongo.SessionContext
 
@@ -87,12 +52,39 @@ type Database struct {
 	*mongo.Database
 }
 
-func NewDatabase(ctx context.Context, uri, database string) (*Database, error) {
-	cli, err := NewMongoClientByURI(ctx, uri)
+func NewDatabase(ctx context.Context, conn DBConn) (*Database, error) {
+	cli, err := NewMongoClientByURI(ctx, conn.URI)
 	if err != nil {
 		return nil, err
 	}
-	return &Database{Database: cli.Database(database)}, nil
+	return &Database{Database: cli.Database(conn.Database)}, nil
+}
+
+// CollectionName 获取集合名称 支持 string, *mongo.Collection, struct TableName() string
+func CollectionName(collection interface{}) string {
+	switch v := collection.(type) {
+	case string:
+		return v
+	case *mongo.Collection:
+		return v.Name()
+	default:
+		// 反射 collection 是否为结构体， 是否存在方法 TableName() string
+		value := reflect.ValueOf(collection)
+		if value.Kind() == reflect.Ptr {
+			// 是否为结构体
+			if value.Elem().Kind() == reflect.Struct {
+				// 是否存在方法 TableName() string
+				if method := value.MethodByName("TableName"); method.IsValid() {
+					if results := method.Call(nil); len(results) > 0 {
+						if name, ok := results[0].Interface().(string); ok {
+							return name
+						}
+					}
+				}
+			}
+		}
+	}
+	return ""
 }
 
 func (db *Database) Exists(ctx context.Context, collection string, filter interface{}) (bool, error) {
@@ -149,7 +141,13 @@ func (db *Database) ListCollectionNames(ctx context.Context, prefix ...string) (
 	return db.Database.ListCollectionNames(ctx, filter)
 }
 
-// Transaction Only supports single db
+// Transaction 只支持Mongodb实例为 副本集或者分片集群部署
+//
+//	tx := func(session mongo.SessionContext) error {
+//		collection := db.Database().Collection("testcollection")
+//		_, err := collection.InsertOne(session, bson.M{"name": "Alice", "age": 30})
+//		return err
+//	}
 func (db *Database) Transaction(ctx context.Context, tx func(session SessionContext) error) error {
 	return db.Client().UseSession(ctx, func(session mongo.SessionContext) error {
 		err := session.StartTransaction(options.Transaction().
@@ -160,7 +158,7 @@ func (db *Database) Transaction(ctx context.Context, tx func(session SessionCont
 		}
 
 		if err := tx(session); err != nil {
-			e := session.AbortTransaction(session)
+			e := session.AbortTransaction(ctx)
 			if e != nil {
 				return fmt.Errorf("tx: %v abort: %v", err, e)
 			}
@@ -168,7 +166,7 @@ func (db *Database) Transaction(ctx context.Context, tx func(session SessionCont
 		}
 
 		for {
-			err := session.CommitTransaction(session)
+			err := session.CommitTransaction(ctx)
 			switch e := err.(type) {
 			case nil:
 				return nil
@@ -182,64 +180,4 @@ func (db *Database) Transaction(ctx context.Context, tx func(session SessionCont
 			}
 		}
 	})
-}
-
-type Index struct {
-	Collection         string
-	Name               string // index name
-	Keys               bson.D
-	Unique             bool  // unique index
-	Background         bool  // background create index
-	ExpireAfterSeconds int32 // ttl index
-}
-
-func (i Index) Validate() error {
-	if i.Collection == "" {
-		return errors.New("collection required")
-	}
-	if len(i.Keys) == 0 {
-		return errors.New("keys required")
-	}
-	return nil
-}
-
-func (db *Database) UpsertCollectionIndexMany(indexMany ...[]Index) error {
-	indexModels := make(map[string][]mongo.IndexModel)
-	for _, many := range indexMany {
-		for _, index := range many {
-			if err := index.Validate(); err != nil {
-				return err
-			}
-			model := mongo.IndexModel{
-				Keys: index.Keys,
-			}
-			opt := options.Index()
-			if index.Name != "" {
-				opt.SetName(index.Name)
-			}
-			opt.SetUnique(index.Unique)
-
-			if index.ExpireAfterSeconds > 0 {
-				opt.SetExpireAfterSeconds(index.ExpireAfterSeconds)
-			}
-
-			model.Options = opt
-
-			v, ok := indexModels[index.Collection]
-			if ok {
-				indexModels[index.Collection] = append(v, model)
-			} else {
-				indexModels[index.Collection] = []mongo.IndexModel{model}
-			}
-		}
-
-		for collection, index := range indexModels {
-			_, err := db.Collection(collection).Indexes().CreateMany(context.Background(), index)
-			if err != nil {
-				return fmt.Errorf("collection: %s %v", collection, err)
-			}
-		}
-	}
-
-	return nil
 }

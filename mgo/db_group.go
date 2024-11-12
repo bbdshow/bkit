@@ -7,8 +7,8 @@ import (
 )
 
 type DBConn struct {
-	Database string
-	URI      string
+	Database string `yaml:"database"`
+	URI      string `yaml:"uri"`
 }
 
 type DBGroupConfig struct {
@@ -30,7 +30,7 @@ func NewDBGroup(cfg DBGroupConfig) (*DBGroup, error) {
 	defer cancel()
 
 	for _, conn := range cfg.Conns {
-		db, err := NewDatabase(ctx, conn.URI, conn.Database)
+		db, err := NewDatabase(ctx, conn)
 		if err != nil {
 			return nil, err
 		}
