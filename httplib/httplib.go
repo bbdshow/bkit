@@ -30,7 +30,7 @@ var (
 	defaultSetting   = HTTPSettings{
 		UserAgent:        defaultUserAgent,
 		ConnectTimeout:   60 * time.Second,
-		ReadWriteTimeout: 120 * time.Second,
+		ReadWriteTimeout: 0, // 默认不设置超时
 		Gzip:             true,
 		DumpBody:         true,
 		KeepAlive:        false,
@@ -193,10 +193,10 @@ func (h *HTTPRequest) SetProtocolVersion(vers string) *HTTPRequest {
 	if len(vers) == 0 {
 		vers = "HTTP/1.1"
 	}
-	majar, minor, ok := http.ParseHTTPVersion(vers)
+	major, minor, ok := http.ParseHTTPVersion(vers)
 	if ok {
 		h.req.Proto = vers
-		h.req.ProtoMajor = majar
+		h.req.ProtoMajor = major
 		h.req.ProtoMinor = minor
 	}
 
@@ -213,8 +213,10 @@ func (h *HTTPRequest) SetCookie(cookies []http.Cookie) *HTTPRequest {
 }
 
 // SetTransport 自定义 transport
-func (h *HTTPRequest) SetTransport(tran http.Transport) *HTTPRequest {
-	h.setting.Transport = http.RoundTripper(&tran)
+func (h *HTTPRequest) SetTransport(tran *http.Transport) *HTTPRequest {
+	if h.setting.Transport == nil {
+		h.setting.Transport = http.RoundTripper(tran)
+	}
 	return h
 }
 
@@ -460,7 +462,7 @@ func (h *HTTPRequest) DoRequest() (resp *http.Response, err error) {
 		trans = &http.Transport{
 			TLSClientConfig:       h.setting.TLSClientConfig,
 			Proxy:                 h.setting.Proxy,
-			DialContext:           TimeoutDialerContext(h.setting.ConnectTimeout, h.setting.ReadWriteTimeout),
+			DialContext:           TimeoutDialerContext(h.setting.ConnectTimeout),
 			DisableKeepAlives:     !h.setting.KeepAlive, // 默认关闭 keepAlive
 			MaxIdleConnsPerHost:   h.setting.MaxIdleConnsPerHost,
 			MaxIdleConns:          100,
@@ -480,7 +482,7 @@ func (h *HTTPRequest) DoRequest() (resp *http.Response, err error) {
 			}
 
 			if t.DialContext == nil {
-				t.DialContext = TimeoutDialerContext(h.setting.ConnectTimeout, h.setting.ReadWriteTimeout)
+				t.DialContext = TimeoutDialerContext(h.setting.ConnectTimeout)
 			}
 		}
 	}
@@ -498,6 +500,20 @@ func (h *HTTPRequest) DoRequest() (resp *http.Response, err error) {
 		h.client = &http.Client{
 			Transport: trans,
 			Jar:       jar,
+		}
+	}
+
+	// 设置超时
+	if h.setting.ReadWriteTimeout > 0 {
+		h.client.Timeout = h.setting.ReadWriteTimeout
+	}
+	// 优先使用 context 传递的超时时间
+	deadline, ok := h.req.Context().Deadline()
+	if ok {
+		h.client.Timeout = time.Until(deadline)
+		if h.client.Timeout < 0 {
+			// 过期了，就默认设置一个超时时间
+			return nil, h.req.Context().Err()
 		}
 	}
 
@@ -531,13 +547,12 @@ func (h *HTTPRequest) DoRequest() (resp *http.Response, err error) {
 		if i > 0 {
 			h.req.Body = io.NopCloser(bytes.NewBuffer(h.forkReqBody))
 		}
-
 		resp, err = h.client.Do(h.req)
 		if err == nil {
 			break
 		}
 		// retry sleep
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(250 * time.Millisecond)
 	}
 
 	return resp, err
@@ -615,24 +630,15 @@ func TimeoutDialer(cTimeout, rwTimeout time.Duration) func(net, addr string) (c 
 	}
 }
 
-func TimeoutDialerContext(cTimeout, rwTimeout time.Duration) func(ctx context.Context, net, addr string) (c net.Conn, err error) {
+func TimeoutDialerContext(connTimeout time.Duration) func(ctx context.Context, net, addr string) (c net.Conn, err error) {
 	f := &net.Dialer{
 		KeepAlive: 60 * time.Second,
 	}
 
-	if cTimeout > 0 {
-		f.Timeout = cTimeout
-	}
-	if rwTimeout > 0 {
-		f.Deadline = time.Now().Local().Add(rwTimeout)
+	if connTimeout > 0 {
+		f.Timeout = connTimeout
 	}
 	return f.DialContext
-
-	//return (&net.Dialer{
-	//	Timeout:   cTimeout,
-	//	KeepAlive: 30 * time.Second,
-	//	Deadline:  time.Now().Local().Add(rwTimeout),
-	//}).DialContext
 }
 
 func copyReqBody(iReq *HTTPRequest) error {
